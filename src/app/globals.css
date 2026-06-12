@@ -1,26 +1,70 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-VariableFont_opsz,wght.ttf") format("truetype-variations");
+  font-weight: 100 900; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-Italic-VariableFont_opsz,wght.ttf") format("truetype-variations");
+  font-weight: 100 900; font-style: italic; font-display: swap;
+}
+@font-face { font-family:"Prompt"; src:url("/fonts/Prompt-Light.ttf") format("truetype"); font-weight:300; font-display:swap; }
+@font-face { font-family:"Prompt"; src:url("/fonts/Prompt-Regular.ttf") format("truetype"); font-weight:400; font-display:swap; }
+@font-face { font-family:"Prompt"; src:url("/fonts/Prompt-Medium.ttf") format("truetype"); font-weight:500; font-display:swap; }
+@font-face { font-family:"Prompt"; src:url("/fonts/Prompt-SemiBold.ttf") format("truetype"); font-weight:600; font-display:swap; }
+@font-face { font-family:"Prompt"; src:url("/fonts/Prompt-Bold.ttf") format("truetype"); font-weight:700; font-display:swap; }
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --grad-mint: linear-gradient(180deg, #5CC9A7 0%, #93DA8D 100%);
+  --grad-sunset: linear-gradient(180deg, #FF9A6B 0%, #FF6F91 100%);
+  --grad-citrus: linear-gradient(180deg, #FFD166 0%, #93DA8D 100%);
+  --grad-sky:    linear-gradient(180deg, #6FB1FC 0%, #5CC9A7 100%);
+  --grad-gauge: linear-gradient(90deg, #5CC9A7 0%, #93DA8D 38%, #FFD166 64%, #FF7A59 100%);
+
+  --coral:        #FF7A59;
+  --coral-tint:   #FFF1EC;
+  --mint-500:     #5CC9A7;
+  --mint-400:     #93DA8D;
+  --mint-tint:    #E8F9F0;
+  --mint-tint-fg: #1A5C3A;
+
+  --canvas:    #F2F1EF;
+  --surface:   #FFFFFF;
+  --surface-2: #FAFAF9;
+
+  --ink:       #1A1A1A;
+  --ink-soft:  #6B6B66;
+  --ink-mute:  #9A9A95;
+
+  --line:      #E5E4E2;
+  --line-soft: #ECEBE8;
+
+  --shadow-card:   0 1px 2px rgba(26,26,26,.04), 0 1px 4px rgba(26,26,26,.04);
+  --shadow-raised: 0 8px 24px rgba(26,26,26,.08);
+  --shadow-float:  0 18px 48px rgba(0,0,0,.28);
+
+  --font-ui:   "Inter", "Prompt", system-ui, -apple-system, sans-serif;
+  --font-thai: "Prompt", "Inter", system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--canvas); font-family: var(--font-ui); color: var(--ink); -webkit-font-smoothing: antialiased; }
+body { min-height: 100vh; }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.45;transform:scale(.85);} }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
+@keyframes slideUp { from{transform:translateY(100%);} to{transform:translateY(0);} }
+@keyframes spin { to{transform:rotate(360deg);} }
+@keyframes bounceIn { 0%{transform:scale(.5);opacity:0;} 70%{transform:scale(1.1);} 100%{transform:scale(1);opacity:1;} }
+@keyframes scrollBounce { 0%,100%{transform:translateX(-50%) translateY(0);opacity:.85;} 50%{transform:translateX(-50%) translateY(7px);opacity:1;} }
+@keyframes kenBurns { 0%,100%{transform:scale(1);} 50%{transform:scale(1.07);} }
+@keyframes wordCycle { 0%{opacity:0;transform:translateY(14px) scaleY(.85);} 14%{opacity:1;transform:translateY(0) scaleY(1);} 82%{opacity:1;transform:translateY(0) scaleY(1);} 100%{opacity:0;transform:translateY(-10px) scaleY(.9);} }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; }
+::selection { background: rgba(92, 201, 167, 0.22); }
+input::placeholder, textarea::placeholder { color: var(--ink-mute); opacity: 1; }
+input:focus::placeholder, textarea:focus::placeholder { color: transparent; }

@@ -1,0 +1,41 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { omise } from "@/lib/omise";
+
+export async function POST(req: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const { event_id, amount } = await req.json();
+  if (!event_id || !amount) return NextResponse.json({ error: "bad_request" }, { status: 400 });
+
+  // Verify the event belongs to this planner
+  const { data: ev } = await supabase.from("events").select("id, status").eq("id", event_id).single();
+  if (!ev) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  if (ev.status !== "draft") return NextResponse.json({ error: "already_active" }, { status: 400 });
+
+  if (!process.env.OMISE_SECRET_KEY) {
+    // Dev fallback when keys aren't wired yet — return the static stub QR.
+    return NextResponse.json({ qr_image: "/assets/promptpay-qr.jpg", stub: true });
+  }
+
+  try {
+    const source = await omise().sources.create({
+      type: "promptpay",
+      amount: amount * 100,         // Omise uses minor units (satang)
+      currency: "thb",
+    });
+    const charge = await omise().charges.create({
+      amount: amount * 100,
+      currency: "thb",
+      source: source.id,
+      metadata: { event_id, account_id: user.id },
+    });
+    const qrUrl = charge.source?.scannable_code?.image?.download_uri;
+    return NextResponse.json({ charge_id: charge.id, qr_image: qrUrl || "/assets/promptpay-qr.jpg" });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "omise_error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
