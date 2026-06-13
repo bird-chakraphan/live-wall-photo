@@ -34,7 +34,7 @@ export default function DashboardPage() {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setEmail(user?.email || "");
-      const { data } = await supabase.from("events").select("*").order("created_at", { ascending: false });
+      const { data } = await supabase.from("events").select("*").order("status_changed_at", { ascending: false });
       setEvents((data || []) as EventRow[]);
       setLoading(false);
     })();
@@ -58,8 +58,10 @@ export default function DashboardPage() {
     router.push("/");
   };
 
+  const statusOrder: Record<EventStatus, number> = { active_live: 0, active_ready: 1, draft: 2, ended: 3 };
+
   const filtered = filter === "All"
-    ? events
+    ? [...events].sort((a, b) => statusOrder[a.status] - statusOrder[b.status])
     : events.filter((e) => e.status === FILTER_TABS.find((t) => t.key === filter)?.status);
 
   return (

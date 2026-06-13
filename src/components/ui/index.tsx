@@ -280,29 +280,31 @@ const cellBtn = (active: boolean): CSSProperties => ({
 });
 
 /* ──────────────── PlannerLayout ──────────────── */
-export function PlannerLayout({ children, userEmail, onLogout, onLogoClick }: {
+export function PlannerLayout({ children, userEmail, onLogout, onLogoClick, hideHeader }: {
   children: ReactNode; userEmail?: string;
-  onLogout?: () => void; onLogoClick?: () => void;
+  onLogout?: () => void; onLogoClick?: () => void; hideHeader?: boolean;
 }) {
   const isMobile = useIsMobile();
   return (
     <div style={{ minHeight: "100vh", background: "var(--canvas)" }}>
-      <header style={{
-        height: 56, background: "var(--surface)", borderBottom: "1px solid var(--line-soft)",
-        position: "sticky", top: 0, zIndex: 50,
-      }}>
-        <div style={{ maxWidth: 800, margin: "0 auto", height: "100%", padding: isMobile ? "0 16px" : "0 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Logo size={16} onClick={onLogoClick} />
-          <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 16 }}>
-            {!isMobile && userEmail && <span style={{ fontSize: 13, color: "var(--mint-500)" }}>{userEmail}</span>}
-            <button onClick={onLogout} style={{
-              fontSize: 13, color: "var(--ink-soft)", background: "none",
-              border: "1px solid var(--line)", borderRadius: 8, cursor: "pointer",
-              padding: "5px 14px", fontFamily: "var(--font-ui)", fontWeight: 500,
-            }}>Log out</button>
+      {!hideHeader && (
+        <header style={{
+          height: 56, background: "var(--surface)", borderBottom: "1px solid var(--line-soft)",
+          position: "sticky", top: 0, zIndex: 50,
+        }}>
+          <div style={{ maxWidth: 800, margin: "0 auto", height: "100%", padding: isMobile ? "0 16px" : "0 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Logo size={16} onClick={onLogoClick} />
+            <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 16 }}>
+              {!isMobile && userEmail && <span style={{ fontSize: 13, color: "var(--mint-500)" }}>{userEmail}</span>}
+              <button onClick={onLogout} style={{
+                fontSize: 13, color: "var(--ink-soft)", background: "none",
+                border: "1px solid var(--line)", borderRadius: 8, cursor: "pointer",
+                padding: "5px 14px", fontFamily: "var(--font-ui)", fontWeight: 500,
+              }}>Log out</button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
       <div style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}>{children}</div>
     </div>
   );
@@ -310,11 +312,11 @@ export function PlannerLayout({ children, userEmail, onLogout, onLogoClick }: {
 
 /* ──────────────── UploadZone ──────────────── */
 export function UploadZone({
-  label, helper, previewUrl, onUpload, onRemove, uploading, aspect = "16/9", small,
+  label, helper, previewUrl, onUpload, onRemove, uploading, aspect = "16/9", scale = "width", height = "50vh", fit = "cover",
 }: {
   label?: string; helper?: string; previewUrl?: string | null;
   onUpload: (file: File) => void; onRemove?: () => void;
-  uploading?: boolean; aspect?: string; small?: boolean;
+  uploading?: boolean; aspect?: string; scale?: "width" | "height" | "natural" | "natural-height"; height?: string; fit?: "cover" | "contain";
 }) {
   const [drag, setDrag] = useState(false);
   const inputId = `upload-${label?.replace(/\s+/g, "-") || Math.random()}`;
@@ -324,49 +326,116 @@ export function UploadZone({
     if (f) onUpload(f);
   };
 
+  // "width": fills the available width, height follows the aspect ratio.
+  // "height": fixed height, width follows the aspect ratio (capped at 100%).
+  // "natural": fixed square (height x height) when empty; once an image is
+  //   uploaded, the box sizes to the image's own aspect ratio, capped at
+  //   height x height — i.e. never crops.
+  // "natural-height": fixed `aspect` box at `height` when empty; once an
+  //   image is uploaded, the box sizes to the image's own aspect ratio,
+  //   capped at height (vertically) and 100% of the container (horizontally)
+  //   — i.e. never crops, and shrinks below `height` for very wide images.
+  // Empty and preview states share this sizing, so they're always the same size.
+  const boxStyle: CSSProperties =
+    scale === "natural" ? { height, width: height } :
+    scale === "height" || scale === "natural-height" ? { aspectRatio: aspect, height, maxWidth: "100%" } :
+    { aspectRatio: aspect, width: "100%" };
+  const wrapperStyle: CSSProperties = scale !== "width" ? { width: "fit-content", maxWidth: "100%" } : {};
+
   return (
     <div>
       {label && <div style={{ color: "var(--ink)", display: "flex", alignItems: "center", height: 24, fontSize: 14, fontWeight: 500, marginBottom: 4 }}>{label}</div>}
       {helper && <div style={{ color: "var(--ink-mute)", marginBottom: 10, lineHeight: 1.5, fontSize: 14 }}>{helper}</div>}
 
       {previewUrl ? (
-        <div style={{ position: "relative", borderRadius: 12, overflow: "hidden", border: "1px solid var(--line)" }}>
-          <div style={{ aspectRatio: aspect, background: "var(--surface-2)" }}>
-            <img src={previewUrl} alt="" style={{ width: "100%", height: "100%", objectFit: small ? "contain" : "cover", display: "block" }} />
-          </div>
-          <div style={{ position: "absolute", bottom: 12, right: 12, display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,.92)", borderRadius: 10, padding: "6px 10px", boxShadow: "var(--shadow-card)" }}>
-            <label htmlFor={inputId} style={{ background: "var(--canvas)", color: "var(--ink-soft)", border: "1px solid var(--line)", borderRadius: 8, padding: "3px 10px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-              {uploading ? "Uploading…" : "Change"}
-            </label>
-            {onRemove && (
-              <button onClick={onRemove} disabled={uploading} style={{ background: "var(--canvas)", color: "var(--ink-soft)", border: "1px solid var(--line)", borderRadius: 8, padding: "3px 10px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-                Remove
-              </button>
+        <div style={{ position: "relative", borderRadius: 12, overflow: "hidden", border: "1px solid var(--line)", ...wrapperStyle }}>
+          <label htmlFor={inputId}
+            onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+            onDragLeave={() => setDrag(false)}
+            onDrop={(e) => { e.preventDefault(); setDrag(false); handleFiles(e.dataTransfer.files); }}
+            style={{ display: "block", cursor: uploading ? "wait" : "pointer", outline: drag ? "2px dashed var(--mint-500)" : "none", outlineOffset: -2 }}>
+            {scale === "natural" ? (
+              <img src={previewUrl} alt="" style={{ display: "block", maxWidth: height, maxHeight: height, width: "auto", height: "auto", background: "var(--surface-2)" }} />
+            ) : scale === "natural-height" ? (
+              <img src={previewUrl} alt="" style={{ display: "block", maxWidth: "100%", maxHeight: height, width: "auto", height: "auto", background: "var(--surface-2)" }} />
+            ) : (
+              <div style={{ ...boxStyle, background: "var(--surface-2)" }}>
+                <img src={previewUrl} alt="" style={{ width: "100%", height: "100%", objectFit: fit, display: "block" }} />
+              </div>
             )}
-          </div>
+          </label>
+          {onRemove && (
+            <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(); }} disabled={uploading} title="Remove"
+              style={{
+                position: "absolute", top: 8, right: 8, width: 26, height: 26, borderRadius: "50%",
+                border: "none", background: "rgba(0,0,0,.5)", color: "#fff", fontSize: 16, lineHeight: 1,
+                display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+              }}>
+              ×
+            </button>
+          )}
+          {uploading && (
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,.6)", fontSize: 13, fontWeight: 600, color: "var(--ink-soft)" }}>
+              Uploading…
+            </div>
+          )}
           <input id={inputId} type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => handleFiles(e.target.files)} style={{ display: "none" }} disabled={uploading} />
         </div>
       ) : (
-        <label htmlFor={inputId}
-          onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-          onDragLeave={() => setDrag(false)}
-          onDrop={(e) => { e.preventDefault(); setDrag(false); handleFiles(e.dataTransfer.files); }}
-          style={{
-            height: small ? 100 : 160, borderRadius: 12,
-            border: `2px dashed ${drag ? "var(--mint-500)" : "var(--line)"}`,
-            background: drag ? "rgba(92,201,167,.05)" : "var(--surface-2)",
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
-            cursor: uploading ? "wait" : "pointer", transition: "all .14s",
-          }}>
-          <div style={{ fontSize: 13, color: "var(--ink-soft)", fontWeight: 500 }}>
-            {uploading ? "Uploading…" : (
-              <>Drop image here or click to <span style={{ color: "var(--coral)", fontWeight: 600 }}>browse file</span></>
-            )}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--ink-mute)" }}>JPG, PNG, WebP · max 10MB</div>
-          <input id={inputId} type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => handleFiles(e.target.files)} style={{ display: "none" }} disabled={uploading} />
-        </label>
+        <div style={wrapperStyle}>
+          <label htmlFor={inputId}
+            onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+            onDragLeave={() => setDrag(false)}
+            onDrop={(e) => { e.preventDefault(); setDrag(false); handleFiles(e.dataTransfer.files); }}
+            style={{
+              ...boxStyle, borderRadius: 12,
+              border: `2px dashed ${drag ? "var(--mint-500)" : "var(--line)"}`,
+              background: drag ? "rgba(92,201,167,.05)" : "var(--surface-2)",
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
+              cursor: uploading ? "wait" : "pointer", transition: "all .14s",
+              textAlign: "center", padding: "12px 16px",
+            }}>
+            <div style={{ fontSize: 13, color: "var(--ink-soft)", fontWeight: 500, lineHeight: 1.4 }}>
+              {uploading ? "Uploading…" : (
+                <>Drop image here or click to <span style={{ color: "var(--coral)", fontWeight: 600 }}>browse file</span></>
+              )}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--ink-mute)", lineHeight: 1.4 }}>JPG, PNG, WebP · max 10MB</div>
+            <input id={inputId} type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => handleFiles(e.target.files)} style={{ display: "none" }} disabled={uploading} />
+          </label>
+        </div>
       )}
+    </div>
+  );
+}
+
+/* ──────────────── Test mode (active_ready) indicators ──────────────── */
+// Shown on the guest upload page and display screen while an event is
+// active_ready (paid but not yet live) — same wording and layout on both.
+
+// In-flow banner — place at the top of the page layout so it pushes content
+// down instead of covering it.
+export function TestModeBanner() {
+  return (
+    <div style={{ position: "sticky", top: 0, zIndex: 9001, background: "#FF7A59", backdropFilter: "blur(6px)", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <span style={{ fontFamily: "var(--font-thai)", fontSize: 14, fontWeight: 700, color: "#fff", textAlign: "center" }}>ยังไม่ได้เริ่มไลฟ์ — กด Start Live เพื่อนำลายน้ำออก</span>
+    </div>
+  );
+}
+
+// Full-screen diagonal "PREVIEW" texture — decorative, sits above all content.
+export function TestModeDiagonalOverlay() {
+  return (
+    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 9000, overflow: "hidden" }}>
+      <div style={{ position: "absolute", inset: -400, transform: "rotate(-30deg)", display: "flex", flexDirection: "column", gap: 64 }}>
+        {Array.from({ length: 14 }).map((_, i) => (
+          <div key={i} style={{ display: "flex", gap: 56, whiteSpace: "nowrap", opacity: 0.3 }}>
+            {Array.from({ length: 7 }).map((_, j) => (
+              <span key={j} style={{ fontSize: 28, fontWeight: 800, color: "#fff", letterSpacing: ".06em", textTransform: "uppercase" }}>ยังไม่เริ่มไลฟ์ · PREVIEW</span>
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

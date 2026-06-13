@@ -13,6 +13,10 @@
 # testing
 /coverage
 
+# local tooling
+/.claude/
+/supabase/.temp/
+
 # next.js
 /.next/
 /out/

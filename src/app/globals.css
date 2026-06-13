@@ -50,6 +50,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
+html { overflow-x: hidden; }
 html, body { margin: 0; padding: 0; background: var(--canvas); font-family: var(--font-ui); color: var(--ink); -webkit-font-smoothing: antialiased; }
 body { min-height: 100vh; }
 
@@ -62,9 +63,14 @@ body { min-height: 100vh; }
 @keyframes kenBurns { 0%,100%{transform:scale(1);} 50%{transform:scale(1.07);} }
 @keyframes wordCycle { 0%{opacity:0;transform:translateY(14px) scaleY(.85);} 14%{opacity:1;transform:translateY(0) scaleY(1);} 82%{opacity:1;transform:translateY(0) scaleY(1);} 100%{opacity:0;transform:translateY(-10px) scaleY(.9);} }
 
+/* Overlay-style scrollbars: invisible until the page/element is hovered. */
+* { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+*:hover { scrollbar-color: var(--line) transparent; }
+
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; }
+::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
+*:hover::-webkit-scrollbar-thumb { background: var(--line); }
 ::selection { background: rgba(92, 201, 167, 0.22); }
 input::placeholder, textarea::placeholder { color: var(--ink-mute); opacity: 1; }
 input:focus::placeholder, textarea:focus::placeholder { color: transparent; }

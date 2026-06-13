@@ -96,14 +96,14 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
 
   if (loading) {
     return (
-      <PlannerLayout userEmail={email} onLogoClick={() => router.push("/")} onLogout={async () => { await supabase.auth.signOut(); router.push("/"); }}>
+      <PlannerLayout userEmail={email} onLogoClick={() => router.push("/")} onLogout={async () => { await supabase.auth.signOut(); router.push("/"); }} hideHeader>
         <div style={{ textAlign: "center", padding: 60 }}><Spinner /></div>
       </PlannerLayout>
     );
   }
   if (!event) {
     return (
-      <PlannerLayout userEmail={email}>
+      <PlannerLayout userEmail={email} hideHeader>
         <div style={{ padding: 40, textAlign: "center" }}>Event not found.</div>
       </PlannerLayout>
     );
@@ -115,42 +115,63 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
   const isEnded = event.status === "ended";
   const isActiveBanner = isReady || isLive;
   const pad = isMobile ? "0 16px" : "0 40px";
+  const headerRow1H = isMobile ? 26 : 30;
+  const headerTotalH = isMobile ? 155 : 94;
+  const headerGrad = isLive ? "var(--grad-mint)" : "var(--grad-sky)";
   const guestUrl = `${typeof window !== "undefined" ? location.origin : ""}/upload/${event.id}`;
   const displayUrl = `${typeof window !== "undefined" ? location.origin : ""}/display/${event.id}`;
 
   return (
-    <PlannerLayout userEmail={email} onLogoClick={() => router.push("/")} onLogout={async () => { await supabase.auth.signOut(); router.push("/"); }}>
-      {/* Active/Ready banner */}
-      {isActiveBanner && (
-        <div style={{ background: isLive ? "var(--grad-mint)" : "var(--grad-sky)", padding: isMobile ? "20px 0 16px" : "36px 0 24px", marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw", position: "sticky", top: 56, zIndex: 40 }}>
+    <PlannerLayout userEmail={email} onLogoClick={() => router.push("/")} onLogout={async () => { await supabase.auth.signOut(); router.push("/"); }} hideHeader>
+      {/* Row 1: Back to Dashboard / Saved indicator — normal flow, scrolls away */}
+      {isActiveBanner ? (
+        <div style={{ background: headerGrad, backgroundSize: `100% ${headerTotalH}px`, backgroundPosition: "0 0", padding: isMobile ? "10px 0 0" : "12px 0 0", marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw" }}>
+          <div style={{ maxWidth: 800, margin: "0 auto", padding: pad, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Link href="/dashboard" style={{ fontSize: 13, color: "#fff", opacity: 0.85, display: "block" }}>← Back to Dashboard</Link>
+            <div style={{ fontSize: 12, color: "#fff", fontWeight: 600, opacity: saveBlink ? 0.9 : 0, transition: "opacity .2s" }}>Saved ✓</div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ background: "var(--canvas)", padding: isMobile ? "10px 0 0" : "12px 0 0", marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw" }}>
+          <div style={{ maxWidth: 800, margin: "0 auto", padding: pad, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Link href="/dashboard" style={{ fontSize: 13, color: "var(--coral)", display: "block" }}>← Back to Dashboard</Link>
+            <div style={{ fontSize: 12, color: "var(--success)", fontWeight: 600, opacity: saveBlink ? 1 : 0, transition: "opacity .2s" }}>Saved ✓</div>
+          </div>
+        </div>
+      )}
+
+      {/* Row 2: title + badge + action — sticky at top of viewport */}
+      {isActiveBanner ? (
+        <div style={{ background: headerGrad, backgroundSize: `100% ${headerTotalH}px`, backgroundPosition: `0 -${headerRow1H}px`, padding: isMobile ? "10px 0 8px" : "12px 0 12px", marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw", position: "sticky", top: 0, zIndex: 40 }}>
           <div style={{ maxWidth: 800, margin: "0 auto", padding: pad }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <Link href="/dashboard" style={{ fontSize: 13, color: "#fff", opacity: 0.85, display: "block" }}>← Back to Dashboard</Link>
-              <div style={{ fontSize: 12, color: "#fff", fontWeight: 600, opacity: saveBlink ? 0.9 : 0, transition: "opacity .2s" }}>Saved ✓</div>
-            </div>
             <div style={{ display: "flex", alignItems: "center", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 10 : 14 }}>
               <span style={{ fontWeight: 800, color: "#fff", fontSize: 26, flex: isMobile ? "none" : 1 }}>{event.name}</span>
               {isLive && <Badge status="active_live">Live now</Badge>}
               <div style={{ display: "flex", gap: 8, width: isMobile ? "100%" : "auto" }}>
                 {isReady && (
-                  <Button variant="secondary" onClick={() => { setShowStartModal(true); setConfirmText(""); }}>Start Live ✦</Button>
+                  <button onClick={() => { setShowStartModal(true); setConfirmText(""); }} style={{
+                    background: "rgba(255,255,255,.95)", border: 0, borderRadius: 10, padding: "0 16px",
+                    fontFamily: "var(--font-ui)", cursor: "pointer", whiteSpace: "nowrap", height: 40,
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6, lineHeight: 1,
+                    fontSize: 15, color: "#000", fontWeight: 600, flex: isMobile ? 1 : "none",
+                  }}>Start Live ✦</button>
                 )}
-                <Link href={`/dashboard/events/${event.id}/control`} style={{ flex: 1 }}>
-                  <Button variant={isLive ? "secondary" : "ghost"}>Live Control</Button>
-                </Link>
+                <Link href={`/dashboard/events/${event.id}/control`} style={{
+                  borderRadius: 10, padding: "0 16px", fontFamily: "var(--font-ui)", textDecoration: "none",
+                  whiteSpace: "nowrap", fontWeight: 600, fontSize: 15, height: 40, lineHeight: 1,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: isLive ? "#1A1A1A" : "#fff",
+                  background: isLive ? "#fff" : "rgba(255,255,255,0)",
+                  border: isLive ? "0" : "1px solid rgba(255,255,255,.8)",
+                  flex: isMobile ? 1 : "none",
+                }}>Live Control</Link>
               </div>
             </div>
           </div>
         </div>
-      )}
-
-      {!isActiveBanner && (
-        <div style={{ background: "var(--canvas)", padding: isMobile ? "20px 0 16px" : "36px 0 24px", marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw", position: "sticky", top: 56, zIndex: 40, borderBottom: "1px solid var(--line-soft)" }}>
+      ) : (
+        <div style={{ background: "var(--canvas)", padding: isMobile ? "10px 0 8px" : "12px 0 12px", marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw", position: "sticky", top: 0, zIndex: 40, borderBottom: "1px solid var(--line-soft)" }}>
           <div style={{ maxWidth: 800, margin: "0 auto", padding: pad }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <Link href="/dashboard" style={{ fontSize: 13, color: "var(--coral)", display: "block" }}>← Back to Dashboard</Link>
-              <div style={{ fontSize: 12, color: "var(--success)", fontWeight: 600, opacity: saveBlink ? 1 : 0, transition: "opacity .2s" }}>Saved ✓</div>
-            </div>
             <div style={{ display: "flex", alignItems: "center", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 10 : 14 }}>
               {editingTitle ? (
                 <input autoFocus value={event.name} onChange={(e) => update({ name: e.target.value })}
@@ -200,22 +221,26 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
               <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
                 {/* Display background */}
                 <UploadZone
-                  label="Display Screen Background"
-                  helper="รูปนี้จะแสดงเป็นพื้นหลังบนหน้าจอในงาน แนะนำให้ใช้รูปแนวนอน (16:9)"
+                  label="Display Screen Image"
+                  helper="รูปนี้จะแสดงบนหน้าจอในงานตอนที่รอแขกอัพโหลดรูปและข้อความ แนะนำให้ใช้รูปแนวนอนที่แคบกว่าความกว้างหน้าจอเล็กน้อย"
                   previewUrl={event.display_bg_url}
                   uploading={uploadingBg}
-                  aspect="16/9"
+                  aspect="3/4"
+                  scale="natural-height"
+                  height="40vh"
                   onUpload={(f) => uploadBranding(f, "display_bg_url", setUploadingBg)}
                   onRemove={() => removeBranding("display_bg_url")}
                 />
 
                 {/* Guest hero */}
                 <UploadZone
-                  label="Guest Upload Hero Image"
-                  helper="รูปนี้จะแสดงในมือถือของแขกในหน้าแชร์ข้อความและรูปภาพ แนะนำให้ใช้รูปคู่บ่าวสาวในแนวตั้ง"
+                  label="Guest Screen Image"
+                  helper="รูปนี้จะแสดงในมือถือของแขกในหน้าแชร์ข้อความและรูปภาพ แนะนำให้ใช้รูปในแนวตั้ง อัตราส่วน 3:4"
                   previewUrl={event.guest_bg_url}
                   uploading={uploadingGuestBg}
                   aspect="3/4"
+                  scale="height"
+                  height="40vh"
                   onUpload={(f) => uploadBranding(f, "guest_bg_url", setUploadingGuestBg)}
                   onRemove={() => removeBranding("guest_bg_url")}
                 />
@@ -223,11 +248,11 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                 {/* Logo */}
                 <UploadZone
                   label="Event Logo"
-                  helper="โลโก้จะปรากฏที่มุมล่างของหน้าจอตลอดงาน แนะนำให้ใช้ไฟล์ PNG พื้นหลังโปร่งใส"
+                  helper="โลโก้จะปรากฏที่มุมล่างของหน้าจอในงาน แนะนำให้ใช้ไฟล์ PNG พื้นหลังโปร่งใส สามารถใช้ขนาดตามโลโก้ที่มีได้เลย"
                   previewUrl={event.logo_url}
                   uploading={uploadingLogo}
-                  aspect="3/1"
-                  small
+                  scale="natural"
+                  height="30vh"
                   onUpload={(f) => uploadBranding(f, "logo_url", setUploadingLogo)}
                   onRemove={() => removeBranding("logo_url")}
                 />
@@ -327,8 +352,20 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
               </div>
             )}
             {isReady && (
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <Button variant="primary" onClick={() => { setShowStartModal(true); setConfirmText(""); }}>Start Live ✦</Button>
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "flex-end",
+                gap: isMobile ? 10 : 20, flexDirection: isMobile ? "column-reverse" : "row",
+              }}>
+                <p style={{ fontSize: 13, color: "var(--ink-mute)", textAlign: "center", lineHeight: 1.6, margin: 0 }}>
+                  หลังจากเริ่มไลฟ์จะไม่สามารถแก้ไขข้อมูลอีเวนท์ได้<br /><b>ระวัง! กดเริ่ม live อย่างรอบคอบ!</b>
+                </p>
+                <button onClick={() => { setShowStartModal(true); setConfirmText(""); }} style={{
+                  background: "var(--grad-sky)", border: 0, borderRadius: 14, padding: "12px 24px",
+                  fontFamily: "var(--font-ui)", fontWeight: 800, color: "#fff", cursor: "pointer",
+                  letterSpacing: "-.01em", boxShadow: "0 4px 16px rgba(111,177,252,.35)", lineHeight: 1,
+                  display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
+                  fontSize: 15, width: isMobile ? "100%" : "auto", justifyContent: "center",
+                }}>Start Live ✦</button>
               </div>
             )}
           </>

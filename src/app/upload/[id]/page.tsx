@@ -1,6 +1,6 @@
 "use client";
 import { use, useEffect, useRef, useState } from "react";
-import { acToSolid, gradientText, Spinner } from "@/components/ui";
+import { acToSolid, gradientText, Spinner, TestModeBanner, TestModeDiagonalOverlay } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 
 type PublicEvent = {
@@ -119,12 +119,13 @@ export default function GuestUploadPage({ params }: { params: Promise<{ id: stri
 
   return (
     <>
+      {isTestMode && <TestModeBanner />}
       <div style={{
         minHeight: "100vh", background: "var(--canvas)", fontFamily: "var(--font-thai)",
         display: "flex", flexDirection: "column", maxWidth: 420, margin: "0 auto",
       }}>
         {/* Hero */}
-        <div style={{ position: "relative", height: "60vh", overflow: "hidden" }}>
+        <div style={{ position: "relative", height: "75vh", overflow: "hidden" }}>
           <img src={event.guest_bg_url || "/photos/event-hero.jpg"} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,.85)" }}>
@@ -235,13 +236,7 @@ export default function GuestUploadPage({ params }: { params: Promise<{ id: stri
       </div>
 
       {/* Test-mode watermark */}
-      {isTestMode && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 9000, pointerEvents: "none", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, background: "rgba(194,65,12,.88)", padding: "10px 20px", textAlign: "center", color: "#fff", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            <span>⏳</span> ยังไม่ได้เริ่มไลฟ์ — กรุณากด Start Live เพื่อนำลายน้ำออก
-          </div>
-        </div>
-      )}
+      {isTestMode && <TestModeDiagonalOverlay />}
     </>
   );
 }

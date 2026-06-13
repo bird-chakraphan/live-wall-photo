@@ -1,6 +1,6 @@
 "use client";
 import { use, useEffect, useMemo, useRef, useState } from "react";
-import { acToSolid, gradientText } from "@/components/ui";
+import { gradientText, TestModeBanner, TestModeDiagonalOverlay } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 import type { SubmissionRow } from "@/types/db";
 
@@ -95,44 +95,47 @@ export default function DisplayPage({ params }: { params: Promise<{ id: string }
   }
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "#000", fontFamily: "var(--font-thai)", overflow: "hidden" }}>
-      {showLiveWall ? (
-        <>
-          {posts.map((p, i) => (
-            <div key={p.id} style={{
-              position: "absolute", inset: 0,
-              opacity: i === idx ? (fade ? 1 : 0) : 0,
-              transition: "opacity .5s ease",
-            }}>
-              <img src={p.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.3) 45%, transparent 70%)" }} />
+    <div style={{ position: "fixed", inset: 0, background: "#000", fontFamily: "var(--font-thai)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      {isTestMode && <TestModeBanner />}
+      <div style={{ position: "relative", flex: 1, overflow: "hidden" }}>
+        {showLiveWall ? (
+          <>
+            {posts.map((p, i) => (
+              <div key={p.id} style={{
+                position: "absolute", inset: 0,
+                opacity: i === idx ? (fade ? 1 : 0) : 0,
+                transition: "opacity .5s ease",
+              }}>
+                <img src={p.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.3) 45%, transparent 70%)" }} />
+              </div>
+            ))}
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 60px 52px", opacity: fade ? 1 : 0, transition: "opacity .5s ease" }}>
+              <div style={{
+                fontSize: 64, fontWeight: 800, ...gradientText(ac),
+                letterSpacing: "-.02em", marginBottom: 14, lineHeight: 1,
+                ...(!ac.includes("gradient") && { textShadow: "0 2px 16px rgba(0,0,0,.35)" }),
+              }}>
+                {currentPost.guest_name}
+              </div>
+              <div style={{ fontSize: 34, fontWeight: 400, color: "rgba(255,255,255,.92)", maxWidth: "65%", lineHeight: 1.4, textShadow: "0 1px 8px rgba(0,0,0,.4)" }}>
+                {currentPost.message}
+              </div>
             </div>
-          ))}
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 60px 52px", opacity: fade ? 1 : 0, transition: "opacity .5s ease" }}>
-            <div style={{
-              fontSize: 64, fontWeight: 800, ...gradientText(ac),
-              letterSpacing: "-.02em", marginBottom: 14, lineHeight: 1,
-              ...(!ac.includes("gradient") && { textShadow: "0 2px 16px rgba(0,0,0,.35)" }),
-            }}>
-              {currentPost.guest_name}
+            <div style={{ position: "absolute", bottom: 22, right: 28, display: "flex", alignItems: "center", gap: 8, color: "rgba(255,255,255,.45)", fontSize: 15, fontWeight: 700, fontFamily: "var(--font-ui)" }}>
+              <img src="/assets/sparkle-mint.svg" alt="" style={{ width: 16, height: 16, opacity: 0.55, filter: "brightness(0) invert(1)" }} />
+              WeddingTech
             </div>
-            <div style={{ fontSize: 34, fontWeight: 400, color: "rgba(255,255,255,.92)", maxWidth: "65%", lineHeight: 1.4, textShadow: "0 1px 8px rgba(0,0,0,.4)" }}>
-              {currentPost.message}
+            <div style={{ position: "absolute", bottom: 22, left: 60, color: "rgba(255,255,255,.4)", fontSize: 14, fontWeight: 600, fontFamily: "var(--font-ui)" }}>
+              {idx + 1} / {posts.length}
             </div>
-          </div>
-          <div style={{ position: "absolute", bottom: 22, right: 28, display: "flex", alignItems: "center", gap: 8, color: "rgba(255,255,255,.45)", fontSize: 15, fontWeight: 700, fontFamily: "var(--font-ui)" }}>
-            <img src="/assets/sparkle-mint.svg" alt="" style={{ width: 16, height: 16, opacity: 0.55, filter: "brightness(0) invert(1)" }} />
-            WeddingTech
-          </div>
-          <div style={{ position: "absolute", bottom: 22, left: 60, color: "rgba(255,255,255,.4)", fontSize: 14, fontWeight: 600, fontFamily: "var(--font-ui)" }}>
-            {idx + 1} / {posts.length}
-          </div>
-        </>
-      ) : (
-        <IdleCard accent={ac} font={f} bg={event.display_bg_url} eventName={event.name} eventId={id} />
-      )}
+          </>
+        ) : (
+          <IdleCard accent={ac} font={f} bg={event.display_bg_url} eventName={event.name} eventId={id} />
+        )}
 
-      {isTestMode && <TestModeOverlay />}
+        {isTestMode && <TestModeDiagonalOverlay />}
+      </div>
     </div>
   );
 }
@@ -156,8 +159,10 @@ function IdleCard({ accent, font, bg, eventName, eventId }: { accent: string; fo
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 22 }}>
           <div style={{ fontFamily: font, color: "var(--ink)", fontSize: 21 }}>สแกนเพื่อแชร์ช่วงเวลาของคุณ</div>
-          <div style={{ width: 244, height: 244, background: "#fff", borderRadius: 22, padding: 18, border: `2.5px solid ${acToSolid(accent)}`, boxShadow: "0 16px 48px rgba(0,0,0,.10)" }}>
-            <img src={qrSrc} alt="QR" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          <div style={{ width: 244, height: 244, background: accent, borderRadius: 22, padding: 2.5, boxShadow: "0 16px 48px rgba(0,0,0,.10)" }}>
+            <div style={{ width: "100%", height: "100%", background: "#fff", borderRadius: 19.5, padding: 18, boxSizing: "border-box" }}>
+              <img src={qrSrc} alt="QR" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            </div>
           </div>
         </div>
         <div style={{ display: "flex", gap: 0, background: "#fff", borderRadius: 16, border: "1px solid var(--line-soft)", overflow: "hidden", width: "100%" }}>
@@ -172,26 +177,6 @@ function IdleCard({ accent, font, bg, eventName, eventId }: { accent: string; fo
           <img src="/assets/sparkle-mint.svg" alt="" style={{ width: 14, height: 14 }} />
           <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-mute)" }}>WeddingTech</span>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function TestModeOverlay() {
-  return (
-    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 50, overflow: "hidden" }}>
-      <div style={{ position: "absolute", inset: -400, transform: "rotate(-28deg)", display: "flex", flexDirection: "column", gap: 80 }}>
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} style={{ display: "flex", gap: 80, whiteSpace: "nowrap", opacity: 0.18 }}>
-            {Array.from({ length: 7 }).map((_, j) => (
-              <span key={j} style={{ fontSize: 36, fontWeight: 900, color: "#fff", letterSpacing: ".08em", fontFamily: "var(--font-ui)", textTransform: "uppercase" }}>ยังไม่เริ่มไลฟ์ · PREVIEW</span>
-            ))}
-          </div>
-        ))}
-      </div>
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, background: "rgba(0,0,0,.62)", backdropFilter: "blur(6px)", padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-        <span style={{ fontSize: 16 }}>⏳</span>
-        <span style={{ fontFamily: "var(--font-thai)", fontSize: 15, fontWeight: 700, color: "#fff" }}>Test Mode · ยังไม่ได้เริ่มไลฟ์</span>
       </div>
     </div>
   );
