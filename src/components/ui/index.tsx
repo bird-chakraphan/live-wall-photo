@@ -468,6 +468,42 @@ export function IdleCard({ accent, font, bg, eventName, eventId }: { accent: str
   );
 }
 
+/* ──────────────── Guest upload page header ──────────────── */
+// A non-interactive preview of the /upload/[id] hero + title block —
+// shared visual reference for the Event Settings preview, sized with
+// cqw units relative to the original 420px-wide mobile layout.
+export function GuestPreviewCard({ accent, font, bg, eventName, eventDate }: { accent: string; font: string; bg: string | null; eventName: string; eventDate: string | null }) {
+  return (
+    <div style={{ position: "absolute", inset: 0, background: "var(--canvas)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div style={{ position: "relative", height: "60%", flexShrink: 0, overflow: "hidden" }}>
+        <img src={bg || "/photos/event-hero.jpg"} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "3.8cqw 4.8cqw", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1.7cqw", fontSize: "3.1cqw", fontWeight: 700, color: "rgba(255,255,255,.85)" }}>
+            <img src="/assets/sparkle-mint.svg" alt="" style={{ width: "3.3cqw", height: "3.3cqw", filter: "brightness(0) invert(1)", opacity: 0.8 }} />
+            WeddingTech
+          </div>
+          <div style={{ display: "flex", background: "rgba(255,255,255,.18)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(255,255,255,.4)" }}>
+            {(["TH", "EN"] as const).map((l) => (
+              <div key={l} style={{
+                padding: "1.2cqw 3.3cqw", fontSize: "2.86cqw", fontWeight: 700,
+                background: l === "TH" ? "rgba(255,255,255,.95)" : "transparent",
+                color: l === "TH" ? "var(--ink)" : "#fff",
+              }}>{l}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div style={{ flex: 1, padding: "4.8cqw 5.2cqw", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ marginBottom: "1.4cqw", fontSize: "3.3cqw", color: "var(--ink-soft)" }}>ยินดีต้อนรับเข้าสู่งานแต่งงานของ</div>
+        <div style={{ fontFamily: font, fontWeight: 800, fontSize: "6.2cqw", marginBottom: "1.9cqw", lineHeight: 1.1, ...gradientText(accent) }}>{eventName}</div>
+        {eventDate && <div style={{ color: "var(--ink-soft)", fontSize: "2.86cqw", marginBottom: "2.86cqw" }}>{eventDate}</div>}
+        <div style={{ background: "var(--line)", height: "0.5cqw", width: "100%", margin: "3cqw 0" }} />
+        <div style={{ fontFamily: font, fontWeight: 800, fontSize: "5cqw", ...gradientText(accent) }}>ส่งความรู้สึกดีๆให้บ่าวสาว</div>
+      </div>
+    </div>
+  );
+}
+
 // Full-screen diagonal "PREVIEW" texture — decorative, sits above all content.
 export function TestModeDiagonalOverlay() {
   return (

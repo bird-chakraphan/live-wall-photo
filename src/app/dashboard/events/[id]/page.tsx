@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Badge, Button, CopyableField, Field, IdleCard, Modal, PlannerLayout, SectionCard, Spinner,
+  Badge, Button, CopyableField, Field, GuestPreviewCard, IdleCard, Modal, PlannerLayout, SectionCard, Spinner,
   UploadZone, acToSolid, useIsMobile,
 } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
@@ -257,6 +257,19 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                   onUpload={(f) => uploadBranding(f, "guest_bg_url", setUploadingGuestBg)}
                   onRemove={() => removeBranding("guest_bg_url")}
                 />
+
+                {/* Guest upload page preview */}
+                <div>
+                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 8 }}>Guest page preview</div>
+                  <div style={{
+                    position: "relative", width: "100%", maxWidth: 280, margin: "0 auto", aspectRatio: "9/16",
+                    borderRadius: 16, overflow: "hidden", boxShadow: "var(--shadow-card)",
+                    containerType: "inline-size",
+                  }}>
+                    <GuestPreviewCard accent={event.accent_color} font={event.display_font}
+                      bg={event.guest_bg_url} eventName={event.name} eventDate={event.event_date} />
+                  </div>
+                </div>
 
                 {/* Logo */}
                 <UploadZone
