@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Badge, Button, CopyableField, Field, GuestPreviewCard, IdleCard, Modal, PlannerLayout, SectionCard, Spinner,
+  Badge, Button, CopyableField, Field, GuestPreviewCard, IdleCard, LiveWallCard, Modal, PlannerLayout, SectionCard, Spinner, gradientText,
   UploadZone, acToSolid, useIsMobile,
 } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
@@ -217,71 +217,15 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
               </div>
             </SectionCard>
 
-            <SectionCard title="ปรับแต่งหน้าจอ">
+            <SectionCard title="ปรับแต่งตีม">
               <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-                {/* Live preview of the display screen's idle state */}
+                {/* Text preview */}
                 <div>
-                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 8 }}>Preview</div>
-                  <div style={{
-                    position: "relative", width: "100%", aspectRatio: "16/9",
-                    borderRadius: 16, overflow: "hidden", boxShadow: "var(--shadow-card)",
-                    containerType: "inline-size",
-                  }}>
-                    <IdleCard accent={event.accent_color} font={event.display_font}
-                      bg={event.display_bg_url} eventName={event.name} eventId={event.id} />
+                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 8 }}>Text Preview</div>
+                  <div style={{ fontFamily: event.display_font, fontSize: 28, fontWeight: 800, ...gradientText(event.accent_color) }}>
+                    {event.name}
                   </div>
                 </div>
-
-                {/* Display background */}
-                <UploadZone
-                  label="Display Screen Image"
-                  helper="รูปนี้จะแสดงบนหน้าจอในงานตอนที่รอแขกอัพโหลดรูปและข้อความ แนะนำให้ใช้รูปแนวนอนที่แคบกว่าความกว้างหน้าจอเล็กน้อย"
-                  previewUrl={event.display_bg_url}
-                  uploading={uploadingBg}
-                  aspect="3/4"
-                  scale="natural-height"
-                  height="40vh"
-                  onUpload={(f) => uploadBranding(f, "display_bg_url", setUploadingBg)}
-                  onRemove={() => removeBranding("display_bg_url")}
-                />
-
-                {/* Guest hero */}
-                <UploadZone
-                  label="Guest Screen Image"
-                  helper="รูปนี้จะแสดงในมือถือของแขกในหน้าแชร์ข้อความและรูปภาพ แนะนำให้ใช้รูปในแนวตั้ง อัตราส่วน 3:4"
-                  previewUrl={event.guest_bg_url}
-                  uploading={uploadingGuestBg}
-                  aspect="3/4"
-                  scale="height"
-                  height="40vh"
-                  onUpload={(f) => uploadBranding(f, "guest_bg_url", setUploadingGuestBg)}
-                  onRemove={() => removeBranding("guest_bg_url")}
-                />
-
-                {/* Guest upload page preview */}
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 8 }}>Guest page preview</div>
-                  <div style={{
-                    position: "relative", width: "100%", maxWidth: 280, margin: "0 auto", aspectRatio: "9/16",
-                    borderRadius: 16, overflow: "hidden", boxShadow: "var(--shadow-card)",
-                    containerType: "inline-size",
-                  }}>
-                    <GuestPreviewCard accent={event.accent_color} font={event.display_font}
-                      bg={event.guest_bg_url} eventName={event.name} eventDate={event.event_date} />
-                  </div>
-                </div>
-
-                {/* Logo */}
-                <UploadZone
-                  label="Event Logo"
-                  helper="โลโก้จะปรากฏที่มุมล่างของหน้าจอในงาน แนะนำให้ใช้ไฟล์ PNG พื้นหลังโปร่งใส สามารถใช้ขนาดตามโลโก้ที่มีได้เลย"
-                  previewUrl={event.logo_url}
-                  uploading={uploadingLogo}
-                  scale="natural"
-                  height="30vh"
-                  onUpload={(f) => uploadBranding(f, "logo_url", setUploadingLogo)}
-                  onRemove={() => removeBranding("logo_url")}
-                />
 
                 {/* Accent color */}
                 <div>
@@ -339,6 +283,62 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                     ))}
                   </div>
                 </div>
+              </div>
+            </SectionCard>
+
+            <SectionCard title="ปรับแต่งหน้าจอไลฟ์">
+              <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+                {/* Waiting screen preview */}
+                <div>
+                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 8 }}>Waiting Screen Preview</div>
+                  <div style={{
+                    position: "relative", width: "100%", aspectRatio: "16/9",
+                    borderRadius: 16, overflow: "hidden", boxShadow: "var(--shadow-card)",
+                    containerType: "inline-size",
+                  }}>
+                    <IdleCard accent={event.accent_color} font={event.display_font}
+                      bg={event.display_bg_url} eventName={event.name} eventId={event.id} />
+                  </div>
+                </div>
+
+                {/* Live wall preview */}
+                <div>
+                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 8 }}>Live Wall Screen Preview</div>
+                  <div style={{
+                    position: "relative", width: "100%", aspectRatio: "16/9",
+                    borderRadius: 16, overflow: "hidden", boxShadow: "var(--shadow-card)",
+                    containerType: "inline-size",
+                  }}>
+                    <LiveWallCard accent={event.accent_color}
+                      photo={event.guest_bg_url || "/photos/event-hero.jpg"}
+                      guestName="คุณบีม" message="ขอให้บ่าวสาวมีความสุขมากๆนะครับ ❤️" />
+                  </div>
+                </div>
+
+                {/* Display background */}
+                <UploadZone
+                  label="Display Screen Image"
+                  helper="รูปนี้จะแสดงบนหน้าจอในงานตอนที่รอแขกอัพโหลดรูปและข้อความ แนะนำให้ใช้รูปแนวนอนที่แคบกว่าความกว้างหน้าจอเล็กน้อย"
+                  previewUrl={event.display_bg_url}
+                  uploading={uploadingBg}
+                  aspect="3/4"
+                  scale="natural-height"
+                  height="40vh"
+                  onUpload={(f) => uploadBranding(f, "display_bg_url", setUploadingBg)}
+                  onRemove={() => removeBranding("display_bg_url")}
+                />
+
+                {/* Logo */}
+                <UploadZone
+                  label="Event Logo"
+                  helper="โลโก้จะปรากฏที่มุมล่างของหน้าจอในงาน แนะนำให้ใช้ไฟล์ PNG พื้นหลังโปร่งใส สามารถใช้ขนาดตามโลโก้ที่มีได้เลย"
+                  previewUrl={event.logo_url}
+                  uploading={uploadingLogo}
+                  scale="natural"
+                  height="30vh"
+                  onUpload={(f) => uploadBranding(f, "logo_url", setUploadingLogo)}
+                  onRemove={() => removeBranding("logo_url")}
+                />
 
                 {/* Duration */}
                 <div>
@@ -359,6 +359,36 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                     ))}
                   </div>
                 </div>
+              </div>
+            </SectionCard>
+
+            <SectionCard title="ปรับแต่งหน้าจอมือถือแขก">
+              <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+                {/* Guest upload page preview */}
+                <div>
+                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 8 }}>Guest Screen Preview</div>
+                  <div style={{
+                    position: "relative", width: "100%", maxWidth: 280, margin: "0 auto", aspectRatio: "9/16",
+                    borderRadius: 16, overflow: "hidden", boxShadow: "var(--shadow-card)",
+                    containerType: "inline-size",
+                  }}>
+                    <GuestPreviewCard accent={event.accent_color} font={event.display_font}
+                      bg={event.guest_bg_url} eventName={event.name} eventDate={event.event_date} />
+                  </div>
+                </div>
+
+                {/* Guest hero */}
+                <UploadZone
+                  label="Guest Screen Image"
+                  helper="รูปนี้จะแสดงในมือถือของแขกในหน้าแชร์ข้อความและรูปภาพ แนะนำให้ใช้รูปในแนวตั้ง อัตราส่วน 3:4"
+                  previewUrl={event.guest_bg_url}
+                  uploading={uploadingGuestBg}
+                  aspect="3/4"
+                  scale="height"
+                  height="40vh"
+                  onUpload={(f) => uploadBranding(f, "guest_bg_url", setUploadingGuestBg)}
+                  onRemove={() => removeBranding("guest_bg_url")}
+                />
               </div>
             </SectionCard>
 

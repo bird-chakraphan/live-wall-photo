@@ -468,6 +468,38 @@ export function IdleCard({ accent, font, bg, eventName, eventId }: { accent: str
   );
 }
 
+/* ──────────────── Display live wall ──────────────── */
+// A non-interactive preview of the /display/[id] "live wall" state —
+// shows a sample guest post styled with the event's accent + font, sized
+// with cqw units relative to the original 1920px-wide display layout.
+export function LiveWallCard({ accent, photo, guestName, message }: { accent: string; photo: string; guestName: string; message: string }) {
+  return (
+    <div style={{ position: "absolute", inset: 0, background: "#000", overflow: "hidden" }}>
+      <img src={photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.3) 45%, transparent 70%)" }} />
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 3.125cqw 2.71cqw" }}>
+        <div style={{
+          fontSize: "3.33cqw", fontWeight: 800, ...gradientText(accent),
+          letterSpacing: "-.02em", marginBottom: "0.73cqw", lineHeight: 1,
+          ...(!accent.includes("gradient") && { textShadow: "0 2px 16px rgba(0,0,0,.35)" }),
+        }}>
+          {guestName}
+        </div>
+        <div style={{ fontSize: "1.77cqw", fontWeight: 400, color: "rgba(255,255,255,.92)", maxWidth: "65%", lineHeight: 1.4, textShadow: "0 1px 8px rgba(0,0,0,.4)" }}>
+          {message}
+        </div>
+      </div>
+      <div style={{ position: "absolute", bottom: "1.15cqw", right: "1.46cqw", display: "flex", alignItems: "center", gap: "0.42cqw", color: "rgba(255,255,255,.45)", fontSize: "0.78cqw", fontWeight: 700, fontFamily: "var(--font-ui)" }}>
+        <img src="/assets/sparkle-mint.svg" alt="" style={{ width: "0.83cqw", height: "0.83cqw", opacity: 0.55, filter: "brightness(0) invert(1)" }} />
+        WeddingTech
+      </div>
+      <div style={{ position: "absolute", bottom: "1.15cqw", left: "3.125cqw", color: "rgba(255,255,255,.4)", fontSize: "0.73cqw", fontWeight: 600, fontFamily: "var(--font-ui)" }}>
+        1 / 3
+      </div>
+    </div>
+  );
+}
+
 /* ──────────────── Guest upload page header ──────────────── */
 // A non-interactive preview of the /upload/[id] hero + title block —
 // shared visual reference for the Event Settings preview, sized with
