@@ -1,5 +1,6 @@
 "use client";
 import React, { CSSProperties, ReactNode, useEffect, useState } from "react";
+import type { LogoSize } from "@/types/db";
 
 /* ──────────────── Hooks ──────────────── */
 export function useIsMobile(bp = 768) {
@@ -194,6 +195,57 @@ export function SectionCard({ title, subtitle, children, style }: { title?: stri
       )}
       <div style={{ padding: title ? "20px 26px 24px" : "24px 26px" }}>{children}</div>
     </div>
+  );
+}
+
+/* ──────────────── PreviewFrame ──────────────── */
+// Wraps a live preview in a visually distinct "tray" — a tinted, dashed-edge
+// panel with an eyebrow label — so it reads as a non-interactive preview of
+// guest/display screens rather than an editable form control.
+export function PreviewFrame({ label, aspect, maxWidth, fillHeight, children }: { label: string; aspect?: string; maxWidth?: number; fillHeight?: boolean; children: ReactNode }) {
+  return (
+    <div style={fillHeight ? { height: "100%", display: "flex", flexDirection: "column" } : undefined}>
+      <div style={{ background: "var(--surface-2)", borderRadius: 18, padding: 14, ...(fillHeight && { flex: 1, display: "flex", flexDirection: "column" }) }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-mute)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-mute)" }}>{label}</span>
+        </div>
+        {aspect ? (
+          <div style={fillHeight ? {
+            position: "relative", height: "100%", width: "auto", maxWidth: "100%", margin: "0 auto",
+            aspectRatio: aspect, borderRadius: 12, overflow: "hidden", boxShadow: "var(--shadow-card)",
+            containerType: "inline-size", flex: 1,
+          } : {
+            position: "relative", width: "100%", maxWidth, margin: maxWidth ? "0 auto" : undefined,
+            aspectRatio: aspect, borderRadius: 12, overflow: "hidden", boxShadow: "var(--shadow-card)",
+            containerType: "inline-size",
+          }}>
+            {children}
+          </div>
+        ) : (
+          <div style={{ background: "var(--surface)", borderRadius: 12, padding: "18px 22px", boxShadow: "var(--shadow-card)" }}>
+            {children}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ──────────────── EmptyImage ──────────────── */
+// Shown in place of a background photo when no image has been uploaded yet —
+// scales with cqw so it matches the host card's sizing.
+function EmptyImage() {
+  return (
+    <div style={{
+      position: "absolute", inset: 0,
+      backgroundImage: "linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)",
+      backgroundSize: "2.4cqw 2.4cqw", backgroundPosition: "0 0, 0 1.2cqw, 1.2cqw -1.2cqw, -1.2cqw 0",
+      backgroundColor: "#fff",
+    }} />
   );
 }
 
@@ -426,15 +478,22 @@ export function TestModeBanner() {
 /* ──────────────── Display idle screen ──────────────── */
 // Shared between the live /display/[id] idle state and the Event Settings
 // preview, so the two never visually drift apart.
-export function IdleCard({ accent, font, bg, eventName, eventId }: { accent: string; font: string; bg: string | null; eventName: string; eventId: string }) {
+export function IdleCard({ accent, font, bg, eventName, eventId, previewEmpty }: { accent: string; font: string; bg: string | null; eventName: string; eventId: string; previewEmpty?: boolean }) {
   const guestUrl = typeof window !== "undefined" ? `${location.origin}/upload/${eventId}` : "";
   // QR code generated client-side via a free QR API.
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(guestUrl)}`;
   return (
     <div style={{ position: "absolute", inset: 0, display: "flex", background: "#111" }}>
       <div style={{ position: "relative", width: "62%", overflow: "hidden" }}>
-        <img src={bg || "/photos/couple-idle.jpg"} alt=""
-          style={{ width: "100%", height: "100%", objectFit: "cover", animation: "kenBurns 24s ease-in-out infinite" }} />
+        {bg ? (
+          <img src={bg} alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover", animation: "kenBurns 24s ease-in-out infinite" }} />
+        ) : previewEmpty ? (
+          <EmptyImage />
+        ) : (
+          <img src="/photos/couple-idle.jpg" alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover", animation: "kenBurns 24s ease-in-out infinite" }} />
+        )}
         <div style={{ position: "absolute", top: 0, right: 0, bottom: 0, background: "linear-gradient(to right, transparent, #F2F1EF)", width: "11.5cqw" }} />
       </div>
       <div style={{ flex: 1, background: "#F2F1EF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", padding: "2.7cqw 2.7cqw 2.3cqw" }}>
@@ -472,20 +531,39 @@ export function IdleCard({ accent, font, bg, eventName, eventId }: { accent: str
 // A non-interactive preview of the /display/[id] "live wall" state —
 // shows a sample guest post styled with the event's accent + font, sized
 // with cqw units relative to the original 1920px-wide display layout.
-export function LiveWallCard({ accent, photo, guestName, message }: { accent: string; photo: string; guestName: string; message: string }) {
+// Logo height as a fraction of the live wall's cqw unit, keyed by the
+// organizer-facing S/M/L/XL size options (S matches the original size).
+export const LOGO_SIZE_CQW: Record<LogoSize, number> = { S: 8, M: 12, L: 16 };
+// Same scale in px, for the fixed-size /display page (1920px-wide reference).
+export const LOGO_SIZE_PX: Record<LogoSize, number> = { S: 154, M: 230, L: 307 };
+
+export function LiveWallCard({ accent, photo, logo, logoSize = "M", guestName, message, previewEmpty }: { accent: string; photo: string | null; logo?: string | null; logoSize?: LogoSize; guestName: string; message: string; previewEmpty?: boolean }) {
   return (
     <div style={{ position: "absolute", inset: 0, background: "#000", overflow: "hidden" }}>
-      <img src={photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.3) 45%, transparent 70%)" }} />
+      {photo ? (
+        <img src={photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      ) : previewEmpty ? (
+        <EmptyImage />
+      ) : (
+        <img src="/photos/event-hero.jpg" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      )}
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,.65) 0%, rgba(0,0,0,.3) 15%, transparent 30%)" }} />
+      {logo && (
+        <div style={{ position: "absolute", top: "1.875cqw", right: "1.875cqw" }}>
+          <img src={logo} alt="" style={{ height: `${LOGO_SIZE_CQW[logoSize]}cqw`, maxWidth: "25cqw", objectFit: "contain", filter: "drop-shadow(0 2px 8px rgba(0,0,0,.4))" }} />
+        </div>
+      )}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 3.125cqw 2.71cqw" }}>
         <div style={{
-          fontSize: "3.33cqw", fontWeight: 800, ...gradientText(accent),
+          fontSize: "4.17cqw", fontWeight: 800, ...gradientText(accent),
           letterSpacing: "-.02em", marginBottom: "0.73cqw", lineHeight: 1,
-          ...(!accent.includes("gradient") && { textShadow: "0 2px 16px rgba(0,0,0,.35)" }),
+          ...(accent.includes("gradient")
+            ? { filter: "drop-shadow(0 2px 10px rgba(0,0,0,.45))" }
+            : { textShadow: "0 2px 10px rgba(0,0,0,.45)" }),
         }}>
           {guestName}
         </div>
-        <div style={{ fontSize: "1.77cqw", fontWeight: 400, color: "rgba(255,255,255,.92)", maxWidth: "65%", lineHeight: 1.4, textShadow: "0 1px 8px rgba(0,0,0,.4)" }}>
+        <div style={{ fontSize: "2.19cqw", fontWeight: 400, color: "rgba(255,255,255,.92)", maxWidth: "65%", lineHeight: 1.4, textShadow: "0 1px 10px rgba(0,0,0,.5)" }}>
           {message}
         </div>
       </div>
@@ -504,11 +582,17 @@ export function LiveWallCard({ accent, photo, guestName, message }: { accent: st
 // A non-interactive preview of the /upload/[id] hero + title block —
 // shared visual reference for the Event Settings preview, sized with
 // cqw units relative to the original 420px-wide mobile layout.
-export function GuestPreviewCard({ accent, font, bg, eventName, eventDate }: { accent: string; font: string; bg: string | null; eventName: string; eventDate: string | null }) {
+export function GuestPreviewCard({ accent, font, bg, eventName, eventDate, previewEmpty }: { accent: string; font: string; bg: string | null; eventName: string; eventDate: string | null; previewEmpty?: boolean }) {
   return (
     <div style={{ position: "absolute", inset: 0, background: "var(--canvas)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-      <div style={{ position: "relative", height: "60%", flexShrink: 0, overflow: "hidden" }}>
-        <img src={bg || "/photos/event-hero.jpg"} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+      <div style={{ position: "relative", height: "70%", flexShrink: 0, overflow: "hidden" }}>
+        {bg ? (
+          <img src={bg} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : previewEmpty ? (
+          <EmptyImage />
+        ) : (
+          <img src="/photos/event-hero.jpg" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        )}
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "3.8cqw 4.8cqw", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "1.7cqw", fontSize: "3.1cqw", fontWeight: 700, color: "rgba(255,255,255,.85)" }}>
             <img src="/assets/sparkle-mint.svg" alt="" style={{ width: "3.3cqw", height: "3.3cqw", filter: "brightness(0) invert(1)", opacity: 0.8 }} />
@@ -525,12 +609,12 @@ export function GuestPreviewCard({ accent, font, bg, eventName, eventDate }: { a
           </div>
         </div>
       </div>
-      <div style={{ flex: 1, padding: "4.8cqw 5.2cqw", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ marginBottom: "1.4cqw", fontSize: "3.3cqw", color: "var(--ink-soft)" }}>ยินดีต้อนรับเข้าสู่งานแต่งงานของ</div>
-        <div style={{ fontFamily: font, fontWeight: 800, fontSize: "6.2cqw", marginBottom: "1.9cqw", lineHeight: 1.1, ...gradientText(accent) }}>{eventName}</div>
-        {eventDate && <div style={{ color: "var(--ink-soft)", fontSize: "2.86cqw", marginBottom: "2.86cqw" }}>{eventDate}</div>}
-        <div style={{ background: "var(--line)", height: "0.5cqw", width: "100%", margin: "3cqw 0" }} />
-        <div style={{ fontFamily: font, fontWeight: 800, fontSize: "5cqw", ...gradientText(accent) }}>ส่งความรู้สึกดีๆให้บ่าวสาว</div>
+      <div style={{ flex: 1, padding: "5.2cqw 5.7cqw 0", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div style={{ marginBottom: "1.6cqw", fontSize: "3.6cqw", color: "var(--ink-soft)" }}>ยินดีต้อนรับเข้าสู่งานแต่งงานของ</div>
+        <div style={{ fontFamily: font, fontWeight: 800, fontSize: "6.7cqw", marginBottom: "2.1cqw", lineHeight: 1.1, ...gradientText(accent) }}>{eventName}</div>
+        {eventDate && <div style={{ color: "var(--ink-soft)", fontSize: "3.1cqw", marginBottom: "3.1cqw" }}>{eventDate}</div>}
+        <div style={{ background: "var(--line)", height: "0.5cqw", width: "100%", margin: "8.2cqw 0" }} />
+        <div style={{ fontFamily: font, fontWeight: 800, fontSize: "5.4cqw", ...gradientText(accent) }}>ส่งความรู้สึกดีๆให้บ่าวสาว</div>
       </div>
     </div>
   );

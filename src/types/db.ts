@@ -2,6 +2,8 @@
 
 export type EventStatus = "draft" | "active_ready" | "active_live" | "ended";
 
+export type LogoSize = "S" | "M" | "L";
+
 export interface EventRow {
   id: string;
   account_id: string;
@@ -14,6 +16,7 @@ export interface EventRow {
   display_bg_url: string | null;
   guest_bg_url: string | null;
   logo_url: string | null;
+  logo_size: LogoSize;
   live_started_at: string | null;
   live_expires_at: string | null;
   paused: boolean;

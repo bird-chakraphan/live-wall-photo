@@ -1,14 +1,14 @@
 "use client";
 import { use, useEffect, useMemo, useRef, useState } from "react";
-import { gradientText, IdleCard, TestModeBanner, TestModeDiagonalOverlay } from "@/components/ui";
+import { gradientText, IdleCard, LOGO_SIZE_PX, TestModeBanner, TestModeDiagonalOverlay } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
-import type { SubmissionRow } from "@/types/db";
+import type { LogoSize, SubmissionRow } from "@/types/db";
 
 type PublicEvent = {
   id: string; name: string;
   status: "active_ready" | "active_live";
   accent_color: string; display_font: string; post_duration_seconds: number;
-  display_bg_url: string | null; logo_url: string | null; paused: boolean;
+  display_bg_url: string | null; logo_url: string | null; logo_size: LogoSize; paused: boolean;
 };
 
 // Submissions are eligible for display once approved_at is at least 60s old —
@@ -107,18 +107,25 @@ export default function DisplayPage({ params }: { params: Promise<{ id: string }
                 transition: "opacity .5s ease",
               }}>
                 <img src={p.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.3) 45%, transparent 70%)" }} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,.65) 0%, rgba(0,0,0,.3) 15%, transparent 30%)" }} />
               </div>
             ))}
+            {event.logo_url && (
+              <div style={{ position: "absolute", top: 36, right: 36 }}>
+                <img src={event.logo_url} alt="" style={{ height: LOGO_SIZE_PX[event.logo_size], maxWidth: 480, objectFit: "contain", filter: "drop-shadow(0 2px 8px rgba(0,0,0,.4))" }} />
+              </div>
+            )}
             <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 60px 52px", opacity: fade ? 1 : 0, transition: "opacity .5s ease" }}>
               <div style={{
-                fontSize: 64, fontWeight: 800, ...gradientText(ac),
+                fontSize: 80, fontWeight: 800, ...gradientText(ac),
                 letterSpacing: "-.02em", marginBottom: 14, lineHeight: 1,
-                ...(!ac.includes("gradient") && { textShadow: "0 2px 16px rgba(0,0,0,.35)" }),
+                ...(ac.includes("gradient")
+                  ? { filter: "drop-shadow(0 2px 10px rgba(0,0,0,.45))" }
+                  : { textShadow: "0 2px 10px rgba(0,0,0,.45)" }),
               }}>
                 {currentPost.guest_name}
               </div>
-              <div style={{ fontSize: 34, fontWeight: 400, color: "rgba(255,255,255,.92)", maxWidth: "65%", lineHeight: 1.4, textShadow: "0 1px 8px rgba(0,0,0,.4)" }}>
+              <div style={{ fontSize: 42, fontWeight: 400, color: "rgba(255,255,255,.92)", maxWidth: "65%", lineHeight: 1.4, textShadow: "0 1px 10px rgba(0,0,0,.5)" }}>
                 {currentPost.message}
               </div>
             </div>

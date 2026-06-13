@@ -7,7 +7,7 @@ import {
   UploadZone, acToSolid, useIsMobile,
 } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
-import type { EventRow, EventStatus } from "@/types/db";
+import type { EventRow, EventStatus, LogoSize } from "@/types/db";
 
 const GRADIENT_PRESETS = [
   { label: "G4 · Mint",    gradient: "linear-gradient(135deg, #5CC9A7, #93DA8D)", solid: "#5CC9A7" },
@@ -27,6 +27,8 @@ const FONT_OPTIONS = [
 ];
 
 const DURATIONS = [10, 15, 20, 25, 30];
+
+const LOGO_SIZES: LogoSize[] = ["S", "M", "L"];
 
 export default function EventSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -132,20 +134,26 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
   const waitingPreview = (
     <PreviewFrame label="Waiting screen preview" aspect="16/9">
       <IdleCard accent={event.accent_color} font={event.display_font}
-        bg={event.display_bg_url} eventName={event.name} eventId={event.id} />
+        bg={event.display_bg_url} eventName={event.name} eventId={event.id} previewEmpty />
     </PreviewFrame>
   );
   const liveWallPreview = (
     <PreviewFrame label="Live wall screen preview" aspect="16/9">
       <LiveWallCard accent={event.accent_color}
-        photo={event.guest_bg_url || "/photos/event-hero.jpg"}
-        guestName="คุณบีม" message="ขอให้บ่าวสาวมีความสุขมากๆนะครับ ❤️" />
+        photo={null} logo={event.logo_url} logoSize={event.logo_size}
+        guestName="คุณเบิร์ด" message="ขอให้บ่าวสาวมีความสุขมากๆนะครับ ❤️" previewEmpty />
     </PreviewFrame>
   );
   const guestPreview = (
-    <PreviewFrame label="Guest screen preview" aspect="9/16" maxWidth={280}>
+    <PreviewFrame label="Guest screen preview" aspect="4/9" maxWidth={280}>
       <GuestPreviewCard accent={event.accent_color} font={event.display_font}
-        bg={event.guest_bg_url} eventName={event.name} eventDate={event.event_date} />
+        bg={event.guest_bg_url} eventName={event.name} eventDate={event.event_date} previewEmpty />
+    </PreviewFrame>
+  );
+  const guestPreviewFill = (
+    <PreviewFrame label="Guest screen preview" aspect="4/9" fillHeight>
+      <GuestPreviewCard accent={event.accent_color} font={event.display_font}
+        bg={event.guest_bg_url} eventName={event.name} eventDate={event.event_date} previewEmpty />
     </PreviewFrame>
   );
 
@@ -173,7 +181,14 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
         <div style={{ background: headerGrad, backgroundSize: `100% ${headerTotalH}px`, backgroundPosition: `0 -${headerRow1H}px`, padding: isMobile ? "10px 0 8px" : "12px 0 12px", marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw", position: "sticky", top: 0, zIndex: 40 }}>
           <div style={{ maxWidth: 800, margin: "0 auto", padding: pad }}>
             <div style={{ display: "flex", alignItems: "center", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 10 : 14 }}>
-              <span style={{ fontWeight: 800, color: "#fff", fontSize: 26, flex: isMobile ? "none" : 1 }}>{event.name}</span>
+              {editingTitle ? (
+                <input autoFocus value={event.name} onChange={(e) => update({ name: e.target.value })}
+                  onBlur={() => setEditingTitle(false)}
+                  onKeyDown={(e) => e.key === "Enter" && setEditingTitle(false)}
+                  style={{ fontSize: 26, fontWeight: 800, border: 0, borderBottom: "2px solid #fff", outline: 0, background: "transparent", color: "#fff", flex: 1 }} />
+              ) : (
+                <span onClick={() => setEditingTitle(true)} style={{ fontWeight: 800, color: "#fff", fontSize: 26, flex: isMobile ? "none" : 1, cursor: "text" }}>{event.name}</span>
+              )}
               {isLive && <Badge status="active_live">Live now</Badge>}
               <div style={{ display: "flex", gap: 8, width: isMobile ? "100%" : "auto" }}>
                 {isReady && (
@@ -248,7 +263,7 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
 
               <div style={{
                 display: isMobile ? "block" : "grid",
-                gridTemplateColumns: isMobile ? undefined : "1fr 380px",
+                gridTemplateColumns: isMobile ? undefined : "1fr 1fr",
                 gap: 20, alignItems: "start",
               }}>
                 <SectionCard title="ปรับแต่งตีม">
@@ -315,7 +330,7 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                 </SectionCard>
 
                 {!isMobile && (
-                  <div style={{ position: "sticky", top: 104 }}>
+                  <div style={{ position: "sticky", top: 84 }}>
                     {textPreview}
                   </div>
                 )}
@@ -323,13 +338,12 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
 
               <div style={{
                 display: isMobile ? "block" : "grid",
-                gridTemplateColumns: isMobile ? undefined : "1fr 380px",
+                gridTemplateColumns: isMobile ? undefined : "1fr 1fr",
                 gap: 20, alignItems: "start",
               }}>
-                <SectionCard title="ปรับแต่งหน้าจอไลฟ์">
+                <SectionCard title="ปรับแต่งหน้าจอรอไลฟ์">
                   <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
                     {isMobile && waitingPreview}
-                    {isMobile && liveWallPreview}
 
                     {/* Display background */}
                     <UploadZone
@@ -343,6 +357,24 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                       onUpload={(f) => uploadBranding(f, "display_bg_url", setUploadingBg)}
                       onRemove={() => removeBranding("display_bg_url")}
                     />
+                  </div>
+                </SectionCard>
+
+                {!isMobile && (
+                  <div style={{ position: "sticky", top: 84 }}>
+                    {waitingPreview}
+                  </div>
+                )}
+              </div>
+
+              <div style={{
+                display: isMobile ? "block" : "grid",
+                gridTemplateColumns: isMobile ? undefined : "1fr 1fr",
+                gap: 20, alignItems: "start",
+              }}>
+                <SectionCard title="ปรับแต่งหน้าจอไลฟ์">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+                    {isMobile && liveWallPreview}
 
                     {/* Logo */}
                     <UploadZone
@@ -355,6 +387,25 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                       onUpload={(f) => uploadBranding(f, "logo_url", setUploadingLogo)}
                       onRemove={() => removeBranding("logo_url")}
                     />
+
+                    {/* Logo size */}
+                    <div>
+                      <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 4 }}>Logo Size</div>
+                      <div style={{ color: "var(--ink-mute)", marginBottom: 12, fontSize: 14 }}>ขนาดโลโก้ที่แสดงบนหน้าจอไลฟ์</div>
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                        {LOGO_SIZES.map((s) => (
+                          <button key={s} onClick={() => update({ logo_size: s })} style={{
+                            borderRadius: 12, cursor: "pointer",
+                            border: `1px solid ${event.logo_size === s ? "var(--mint-500)" : "var(--line)"}`,
+                            background: event.logo_size === s ? "rgba(92,201,167,.06)" : "var(--surface)",
+                            height: 32, width: 44,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <span style={{ fontWeight: 700, fontSize: 14, lineHeight: 1 }}>{s}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
                     {/* Duration */}
                     <div>
@@ -379,8 +430,7 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                 </SectionCard>
 
                 {!isMobile && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 24, position: "sticky", top: 104 }}>
-                    {waitingPreview}
+                  <div style={{ position: "sticky", top: 84 }}>
                     {liveWallPreview}
                   </div>
                 )}
@@ -388,8 +438,8 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
 
               <div style={{
                 display: isMobile ? "block" : "grid",
-                gridTemplateColumns: isMobile ? undefined : "1fr 380px",
-                gap: 20, alignItems: "start",
+                gridTemplateColumns: isMobile ? undefined : "1fr 1fr",
+                gap: 20, alignItems: "stretch",
               }}>
                 <SectionCard title="ปรับแต่งหน้าจอมือถือแขก">
                   <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
@@ -410,11 +460,7 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                   </div>
                 </SectionCard>
 
-                {!isMobile && (
-                  <div style={{ position: "sticky", top: 104 }}>
-                    {guestPreview}
-                  </div>
-                )}
+                {!isMobile && guestPreviewFill}
               </div>
             </div>
 
