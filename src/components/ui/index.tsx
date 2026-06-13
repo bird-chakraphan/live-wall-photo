@@ -24,11 +24,17 @@ export function acToSolid(ac?: string | null): string {
 export function gradientText(ac?: string | null): CSSProperties {
   if (ac && ac.includes("gradient")) {
     return {
-      background: ac,
+      backgroundImage: ac,
       WebkitBackgroundClip: "text",
       WebkitTextFillColor: "transparent",
       backgroundClip: "text",
       color: "",
+      // Shrink the box to fit the text — otherwise a block-level element's
+      // full-width box stretches the gradient, leaving short text showing
+      // only a sliver of one color.
+      display: "inline-block",
+      width: "fit-content",
+      maxWidth: "100%",
     };
   }
   return { color: ac || "#FF7A59" };
@@ -298,6 +304,69 @@ export function PlannerLayout({ children, userEmail, onLogout, onLogoClick }: {
         </div>
       </header>
       <div style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}>{children}</div>
+    </div>
+  );
+}
+
+/* ──────────────── UploadZone ──────────────── */
+export function UploadZone({
+  label, helper, previewUrl, onUpload, onRemove, uploading, aspect = "16/9", small,
+}: {
+  label?: string; helper?: string; previewUrl?: string | null;
+  onUpload: (file: File) => void; onRemove?: () => void;
+  uploading?: boolean; aspect?: string; small?: boolean;
+}) {
+  const [drag, setDrag] = useState(false);
+  const inputId = `upload-${label?.replace(/\s+/g, "-") || Math.random()}`;
+
+  const handleFiles = (files: FileList | null) => {
+    const f = files?.[0];
+    if (f) onUpload(f);
+  };
+
+  return (
+    <div>
+      {label && <div style={{ color: "var(--ink)", display: "flex", alignItems: "center", height: 24, fontSize: 14, fontWeight: 500, marginBottom: 4 }}>{label}</div>}
+      {helper && <div style={{ color: "var(--ink-mute)", marginBottom: 10, lineHeight: 1.5, fontSize: 14 }}>{helper}</div>}
+
+      {previewUrl ? (
+        <div style={{ position: "relative", borderRadius: 12, overflow: "hidden", border: "1px solid var(--line)" }}>
+          <div style={{ aspectRatio: aspect, background: "var(--surface-2)" }}>
+            <img src={previewUrl} alt="" style={{ width: "100%", height: "100%", objectFit: small ? "contain" : "cover", display: "block" }} />
+          </div>
+          <div style={{ position: "absolute", bottom: 12, right: 12, display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,.92)", borderRadius: 10, padding: "6px 10px", boxShadow: "var(--shadow-card)" }}>
+            <label htmlFor={inputId} style={{ background: "var(--canvas)", color: "var(--ink-soft)", border: "1px solid var(--line)", borderRadius: 8, padding: "3px 10px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+              {uploading ? "Uploading…" : "Change"}
+            </label>
+            {onRemove && (
+              <button onClick={onRemove} disabled={uploading} style={{ background: "var(--canvas)", color: "var(--ink-soft)", border: "1px solid var(--line)", borderRadius: 8, padding: "3px 10px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                Remove
+              </button>
+            )}
+          </div>
+          <input id={inputId} type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => handleFiles(e.target.files)} style={{ display: "none" }} disabled={uploading} />
+        </div>
+      ) : (
+        <label htmlFor={inputId}
+          onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+          onDragLeave={() => setDrag(false)}
+          onDrop={(e) => { e.preventDefault(); setDrag(false); handleFiles(e.dataTransfer.files); }}
+          style={{
+            height: small ? 100 : 160, borderRadius: 12,
+            border: `2px dashed ${drag ? "var(--mint-500)" : "var(--line)"}`,
+            background: drag ? "rgba(92,201,167,.05)" : "var(--surface-2)",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
+            cursor: uploading ? "wait" : "pointer", transition: "all .14s",
+          }}>
+          <div style={{ fontSize: 13, color: "var(--ink-soft)", fontWeight: 500 }}>
+            {uploading ? "Uploading…" : (
+              <>Drop image here or click to <span style={{ color: "var(--coral)", fontWeight: 600 }}>browse file</span></>
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--ink-mute)" }}>JPG, PNG, WebP · max 10MB</div>
+          <input id={inputId} type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => handleFiles(e.target.files)} style={{ display: "none" }} disabled={uploading} />
+        </label>
+      )}
     </div>
   );
 }

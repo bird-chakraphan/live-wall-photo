@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Badge, Button, CopyableField, Field, gradientText, Modal, PlannerLayout, SectionCard, Spinner,
-  acToSolid, useIsMobile,
+  UploadZone, acToSolid, useIsMobile,
 } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 import type { EventRow, EventStatus } from "@/types/db";
@@ -41,6 +41,9 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
   const [showEndModal, setShowEndModal] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
+  const [uploadingBg, setUploadingBg] = useState(false);
+  const [uploadingGuestBg, setUploadingGuestBg] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -68,6 +71,27 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
     const patch = { status, ...extra };
     await supabase.from("events").update(patch).eq("id", event.id);
     setEvent({ ...event, ...patch });
+  };
+
+  const uploadBranding = async (
+    file: File,
+    column: "display_bg_url" | "guest_bg_url" | "logo_url",
+    setUploading: (v: boolean) => void
+  ) => {
+    if (!event) return;
+    if (file.size > 10 * 1024 * 1024) { alert("File too large (max 10MB)"); return; }
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${event.id}/${column}-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("event-branding").upload(path, file, { upsert: true });
+    if (upErr) { alert(`Upload failed: ${upErr.message}`); setUploading(false); return; }
+    const { data: pub } = supabase.storage.from("event-branding").getPublicUrl(path);
+    await update({ [column]: pub.publicUrl });
+    setUploading(false);
+  };
+
+  const removeBranding = async (column: "display_bg_url" | "guest_bg_url" | "logo_url") => {
+    await update({ [column]: null });
   };
 
   if (loading) {
@@ -100,7 +124,10 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
       {isActiveBanner && (
         <div style={{ background: isLive ? "var(--grad-mint)" : "var(--grad-sky)", padding: isMobile ? "20px 0 16px" : "36px 0 24px", marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw", position: "sticky", top: 56, zIndex: 40 }}>
           <div style={{ maxWidth: 800, margin: "0 auto", padding: pad }}>
-            <Link href="/dashboard" style={{ fontSize: 13, color: "#fff", opacity: 0.85, display: "block", marginBottom: 12 }}>← Back to Dashboard</Link>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <Link href="/dashboard" style={{ fontSize: 13, color: "#fff", opacity: 0.85, display: "block" }}>← Back to Dashboard</Link>
+              <div style={{ fontSize: 12, color: "#fff", fontWeight: 600, opacity: saveBlink ? 0.9 : 0, transition: "opacity .2s" }}>Saved ✓</div>
+            </div>
             <div style={{ display: "flex", alignItems: "center", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 10 : 14 }}>
               <span style={{ fontWeight: 800, color: "#fff", fontSize: 26, flex: isMobile ? "none" : 1 }}>{event.name}</span>
               {isLive && <Badge status="active_live">Live now</Badge>}
@@ -120,7 +147,10 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
       {!isActiveBanner && (
         <div style={{ background: "var(--canvas)", padding: isMobile ? "20px 0 16px" : "36px 0 24px", marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw", position: "sticky", top: 56, zIndex: 40, borderBottom: "1px solid var(--line-soft)" }}>
           <div style={{ maxWidth: 800, margin: "0 auto", padding: pad }}>
-            <Link href="/dashboard" style={{ fontSize: 13, color: "var(--coral)", display: "block", marginBottom: 12 }}>← Back to Dashboard</Link>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <Link href="/dashboard" style={{ fontSize: 13, color: "var(--coral)", display: "block" }}>← Back to Dashboard</Link>
+              <div style={{ fontSize: 12, color: "var(--success)", fontWeight: 600, opacity: saveBlink ? 1 : 0, transition: "opacity .2s" }}>Saved ✓</div>
+            </div>
             <div style={{ display: "flex", alignItems: "center", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 10 : 14 }}>
               {editingTitle ? (
                 <input autoFocus value={event.name} onChange={(e) => update({ name: e.target.value })}
@@ -144,8 +174,6 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
       )}
 
       <div style={{ padding: isMobile ? "20px 16px 60px" : "32px 40px 80px", display: "flex", flexDirection: "column", gap: 20 }}>
-        {saveBlink && <div style={{ fontSize: 12, color: "var(--success)", fontWeight: 600 }}>Saved ✓</div>}
-
         {isActiveBanner && (
           <>
             <SectionCard title="ลิ้งค์สำหรับให้แขกโพส" subtitle="พิมพ์หรือแสดง QR ที่งาน ให้แขกสแกนเพื่ออัปโหลดรูปและข้อความ">
@@ -170,10 +198,44 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
 
             <SectionCard title="ปรับแต่งหน้าจอ">
               <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+                {/* Display background */}
+                <UploadZone
+                  label="Display Screen Background"
+                  helper="รูปนี้จะแสดงเป็นพื้นหลังบนหน้าจอในงาน แนะนำให้ใช้รูปแนวนอน (16:9)"
+                  previewUrl={event.display_bg_url}
+                  uploading={uploadingBg}
+                  aspect="16/9"
+                  onUpload={(f) => uploadBranding(f, "display_bg_url", setUploadingBg)}
+                  onRemove={() => removeBranding("display_bg_url")}
+                />
+
+                {/* Guest hero */}
+                <UploadZone
+                  label="Guest Upload Hero Image"
+                  helper="รูปนี้จะแสดงในมือถือของแขกในหน้าแชร์ข้อความและรูปภาพ แนะนำให้ใช้รูปคู่บ่าวสาวในแนวตั้ง"
+                  previewUrl={event.guest_bg_url}
+                  uploading={uploadingGuestBg}
+                  aspect="3/4"
+                  onUpload={(f) => uploadBranding(f, "guest_bg_url", setUploadingGuestBg)}
+                  onRemove={() => removeBranding("guest_bg_url")}
+                />
+
+                {/* Logo */}
+                <UploadZone
+                  label="Event Logo"
+                  helper="โลโก้จะปรากฏที่มุมล่างของหน้าจอตลอดงาน แนะนำให้ใช้ไฟล์ PNG พื้นหลังโปร่งใส"
+                  previewUrl={event.logo_url}
+                  uploading={uploadingLogo}
+                  aspect="3/1"
+                  small
+                  onUpload={(f) => uploadBranding(f, "logo_url", setUploadingLogo)}
+                  onRemove={() => removeBranding("logo_url")}
+                />
+
                 {/* Event name preview */}
                 <div>
                   <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 8 }}>Event name preview</div>
-                  <span style={{ fontFamily: event.display_font, ...gradientText(event.accent_color), fontSize: 18, fontWeight: 700, display: "block" }}>
+                  <span style={{ fontFamily: event.display_font, fontSize: 18, fontWeight: 700, ...gradientText(event.accent_color) }}>
                     {event.name}
                   </span>
                 </div>
@@ -181,7 +243,7 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                 {/* Accent color */}
                 <div>
                   <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 4 }}>Accent color</div>
-                  <div style={{ color: "var(--ink-mute)", marginBottom: 12, fontSize: 14 }}>สีหลักที่จะใช้แสดงชื่องาน และปุ่มในหน้าโพสของแขก</div>
+                  <div style={{ color: "var(--ink-mute)", marginBottom: 12, fontSize: 14 }}>สีหลักที่จะใช้แสดงในมือถือของแขก และข้อความบนหน้าจอ</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                     {GRADIENT_PRESETS.map((p) => {
                       const sel = event.accent_color === p.gradient;
@@ -194,10 +256,28 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                           }} />
                       );
                     })}
-                    <div style={{ position: "relative", width: 40, height: 32 }}>
-                      <input type="color" value={acToSolid(event.accent_color)} onChange={(e) => update({ accent_color: e.target.value })}
-                        style={{ width: 40, height: 32, border: 0, borderRadius: 12, padding: 0, cursor: "pointer" }} />
-                    </div>
+                    {(() => {
+                      const isCustom = !GRADIENT_PRESETS.some((p) => p.gradient === event.accent_color);
+                      const solid = acToSolid(event.accent_color);
+                      return (
+                        <div title="Custom color" style={{
+                          position: "relative", width: 40, height: 32, flexShrink: 0,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          cursor: "pointer", borderRadius: 12,
+                          background: isCustom ? solid : "var(--surface-2)",
+                          boxShadow: isCustom ? `0 0 0 2px #fff, 0 0 0 4px ${solid}` : "var(--shadow-card)",
+                        }}>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                            stroke={isCustom ? "rgba(255,255,255,.85)" : "var(--ink-soft)"}
+                            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M2 22l1-1h3l9-9" /><path d="M3 21v-3l9-9" />
+                            <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8-2.2 2.2-1-1" />
+                          </svg>
+                          <input type="color" value={solid} onChange={(e) => update({ accent_color: e.target.value })}
+                            style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", padding: 0, border: 0 }} />
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -227,10 +307,11 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                         borderRadius: 12, cursor: "pointer",
                         border: `1px solid ${event.post_duration_seconds === d ? "var(--mint-500)" : "var(--line)"}`,
                         background: event.post_duration_seconds === d ? "rgba(92,201,167,.06)" : "var(--surface)",
-                        height: 32, padding: "6px 14px",
+                        height: 32, padding: "0 14px",
+                        display: "flex", alignItems: "center", justifyContent: "center",
                       }}>
-                        <span style={{ fontWeight: 700, fontSize: 14 }}>{d}</span>
-                        <span style={{ fontWeight: 500, color: "var(--ink-mute)", fontSize: 12, marginLeft: 4 }}>Sec</span>
+                        <span style={{ fontWeight: 700, fontSize: 14, lineHeight: 1 }}>{d}</span>
+                        <span style={{ fontWeight: 500, color: "var(--ink-mute)", fontSize: 12, marginLeft: 4, lineHeight: 1 }}>Sec</span>
                       </button>
                     ))}
                   </div>

@@ -43,13 +43,14 @@ export default function DashboardPage() {
   const createEvent = async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { alert("Not logged in (no user session found)."); return; }
     const { data, error } = await supabase
       .from("events")
       .insert({ account_id: user.id, name: "Untitled Event" })
       .select("id")
       .single();
-    if (!error && data) router.push(`/dashboard/events/${data.id}`);
+    if (error) { alert(`Error creating event: ${error.message}`); return; }
+    if (data) router.push(`/dashboard/events/${data.id}`);
   };
 
   const logout = async () => {
