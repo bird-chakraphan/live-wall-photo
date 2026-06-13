@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Badge, Button, CopyableField, Field, GuestPreviewCard, IdleCard, LiveWallCard, Modal, PlannerLayout, SectionCard, Spinner, gradientText,
+  Badge, Button, CopyableField, Field, GuestPreviewCard, IdleCard, LiveWallCard, Modal, PlannerLayout, PreviewFrame, SectionCard, Spinner, gradientText,
   UploadZone, acToSolid, useIsMobile,
 } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
@@ -121,6 +121,34 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
   const guestUrl = `${typeof window !== "undefined" ? location.origin : ""}/upload/${event.id}`;
   const displayUrl = `${typeof window !== "undefined" ? location.origin : ""}/display/${event.id}`;
 
+  // Live previews — shown inline on mobile, gathered into a sticky rail on desktop
+  const textPreview = (
+    <PreviewFrame label="Text preview">
+      <div style={{ fontFamily: event.display_font, fontSize: 28, fontWeight: 800, ...gradientText(event.accent_color) }}>
+        {event.name}
+      </div>
+    </PreviewFrame>
+  );
+  const waitingPreview = (
+    <PreviewFrame label="Waiting screen preview" aspect="16/9">
+      <IdleCard accent={event.accent_color} font={event.display_font}
+        bg={event.display_bg_url} eventName={event.name} eventId={event.id} />
+    </PreviewFrame>
+  );
+  const liveWallPreview = (
+    <PreviewFrame label="Live wall screen preview" aspect="16/9">
+      <LiveWallCard accent={event.accent_color}
+        photo={event.guest_bg_url || "/photos/event-hero.jpg"}
+        guestName="คุณบีม" message="ขอให้บ่าวสาวมีความสุขมากๆนะครับ ❤️" />
+    </PreviewFrame>
+  );
+  const guestPreview = (
+    <PreviewFrame label="Guest screen preview" aspect="9/16" maxWidth={280}>
+      <GuestPreviewCard accent={event.accent_color} font={event.display_font}
+        bg={event.guest_bg_url} eventName={event.name} eventDate={event.event_date} />
+    </PreviewFrame>
+  );
+
   return (
     <PlannerLayout userEmail={email} onLogoClick={() => router.push("/")} onLogout={async () => { await supabase.auth.signOut(); router.push("/"); }} hideHeader>
       {/* Row 1: Back to Dashboard / Saved indicator — normal flow, scrolls away */}
@@ -208,189 +236,187 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
 
         {!isLive && !isEnded && (
           <>
-            <SectionCard title="รายละเอียดงาน">
-              <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-                <Field label="Event name" value={event.name} onChange={(v) => update({ name: v })} required helperTop
-                  helper="ชื่อนี้จะปรากฏบนหน้าจอในงาน และบนหน้าอัปโหลดรูปของแขก" />
-                <Field label="Event date" type="date" value={event.event_date || ""} onChange={(v) => update({ event_date: v || null })} helperTop
-                  helper="ใช้แสดงในหน้า Dashboard ของคุณเท่านั้น" />
-              </div>
-            </SectionCard>
-
-            <SectionCard title="ปรับแต่งตีม">
-              <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-                {/* Text preview */}
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 8 }}>Text Preview</div>
-                  <div style={{ fontFamily: event.display_font, fontSize: 28, fontWeight: 800, ...gradientText(event.accent_color) }}>
-                    {event.name}
-                  </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              <SectionCard title="รายละเอียดงาน">
+                <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+                  <Field label="Event name" value={event.name} onChange={(v) => update({ name: v })} required helperTop
+                    helper="ชื่อนี้จะปรากฏบนหน้าจอในงาน และบนหน้าอัปโหลดรูปของแขก" />
+                  <Field label="Event date" type="date" value={event.event_date || ""} onChange={(v) => update({ event_date: v || null })} helperTop
+                    helper="ใช้แสดงในหน้า Dashboard ของคุณเท่านั้น" />
                 </div>
+              </SectionCard>
 
-                {/* Accent color */}
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 4 }}>Accent color</div>
-                  <div style={{ color: "var(--ink-mute)", marginBottom: 12, fontSize: 14 }}>สีหลักที่จะใช้แสดงในมือถือของแขก และข้อความบนหน้าจอ</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                    {GRADIENT_PRESETS.map((p) => {
-                      const sel = event.accent_color === p.gradient;
-                      return (
-                        <button key={p.label} onClick={() => update({ accent_color: p.gradient })} title={p.label}
-                          style={{
-                            width: 40, height: 32, background: p.gradient, border: 0,
+              <div style={{
+                display: isMobile ? "block" : "grid",
+                gridTemplateColumns: isMobile ? undefined : "1fr 380px",
+                gap: 20, alignItems: "start",
+              }}>
+                <SectionCard title="ปรับแต่งตีม">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+                    {isMobile && textPreview}
+
+                    {/* Accent color */}
+                    <div>
+                      <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 4 }}>Accent color</div>
+                      <div style={{ color: "var(--ink-mute)", marginBottom: 12, fontSize: 14 }}>สีหลักที่จะใช้แสดงในมือถือของแขก และข้อความบนหน้าจอ</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                        {GRADIENT_PRESETS.map((p) => {
+                          const sel = event.accent_color === p.gradient;
+                          return (
+                            <button key={p.label} onClick={() => update({ accent_color: p.gradient })} title={p.label}
+                              style={{
+                                width: 40, height: 32, background: p.gradient, border: 0,
+                                borderRadius: 12, cursor: "pointer",
+                                boxShadow: sel ? `0 0 0 2px #fff, 0 0 0 4px ${p.solid}` : "var(--shadow-card)",
+                              }} />
+                          );
+                        })}
+                        {(() => {
+                          const isCustom = !GRADIENT_PRESETS.some((p) => p.gradient === event.accent_color);
+                          const solid = acToSolid(event.accent_color);
+                          return (
+                            <div title="Custom color" style={{
+                              position: "relative", width: 40, height: 32, flexShrink: 0,
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              cursor: "pointer", borderRadius: 12,
+                              background: isCustom ? solid : "var(--surface-2)",
+                              boxShadow: isCustom ? `0 0 0 2px #fff, 0 0 0 4px ${solid}` : "var(--shadow-card)",
+                            }}>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                stroke={isCustom ? "rgba(255,255,255,.85)" : "var(--ink-soft)"}
+                                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M2 22l1-1h3l9-9" /><path d="M3 21v-3l9-9" />
+                                <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8-2.2 2.2-1-1" />
+                              </svg>
+                              <input type="color" value={solid} onChange={(e) => update({ accent_color: e.target.value })}
+                                style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", padding: 0, border: 0 }} />
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Font */}
+                    <div>
+                      <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 4 }}>Display font</div>
+                      <div style={{ color: "var(--ink-mute)", marginBottom: 12, fontSize: 14 }}>ฟอนต์ที่จะใช้แสดงชื่องานในมือถือของแขก และข้อความบนหน้าจอ</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                        {FONT_OPTIONS.map((f) => (
+                          <button key={f.value} onClick={() => update({ display_font: f.value })} style={{
+                            fontFamily: f.value, fontWeight: 600, borderRadius: 12, cursor: "pointer",
+                            border: `1px solid ${event.display_font === f.value ? "var(--mint-500)" : "var(--line)"}`,
+                            background: event.display_font === f.value ? "rgba(92,201,167,.06)" : "var(--surface)",
+                            color: "var(--ink)", fontSize: 14, height: 32, padding: "4px 14px",
+                          }}>{f.label}</button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </SectionCard>
+
+                {!isMobile && (
+                  <div style={{ position: "sticky", top: 104 }}>
+                    {textPreview}
+                  </div>
+                )}
+              </div>
+
+              <div style={{
+                display: isMobile ? "block" : "grid",
+                gridTemplateColumns: isMobile ? undefined : "1fr 380px",
+                gap: 20, alignItems: "start",
+              }}>
+                <SectionCard title="ปรับแต่งหน้าจอไลฟ์">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+                    {isMobile && waitingPreview}
+                    {isMobile && liveWallPreview}
+
+                    {/* Display background */}
+                    <UploadZone
+                      label="Display Screen Image"
+                      helper="รูปนี้จะแสดงบนหน้าจอในงานตอนที่รอแขกอัพโหลดรูปและข้อความ แนะนำให้ใช้รูปแนวนอนที่แคบกว่าความกว้างหน้าจอเล็กน้อย"
+                      previewUrl={event.display_bg_url}
+                      uploading={uploadingBg}
+                      aspect="3/4"
+                      scale="natural-height"
+                      height="40vh"
+                      onUpload={(f) => uploadBranding(f, "display_bg_url", setUploadingBg)}
+                      onRemove={() => removeBranding("display_bg_url")}
+                    />
+
+                    {/* Logo */}
+                    <UploadZone
+                      label="Event Logo"
+                      helper="โลโก้จะปรากฏที่มุมล่างของหน้าจอในงาน แนะนำให้ใช้ไฟล์ PNG พื้นหลังโปร่งใส สามารถใช้ขนาดตามโลโก้ที่มีได้เลย"
+                      previewUrl={event.logo_url}
+                      uploading={uploadingLogo}
+                      scale="natural"
+                      height="30vh"
+                      onUpload={(f) => uploadBranding(f, "logo_url", setUploadingLogo)}
+                      onRemove={() => removeBranding("logo_url")}
+                    />
+
+                    {/* Duration */}
+                    <div>
+                      <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 4 }}>Display pace</div>
+                      <div style={{ color: "var(--ink-mute)", marginBottom: 12, fontSize: 14 }}>ระยะเวลาที่แต่ละโพสต์ของแขกจะแสดงบนหน้าจอ</div>
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                        {DURATIONS.map((d) => (
+                          <button key={d} onClick={() => update({ post_duration_seconds: d })} style={{
                             borderRadius: 12, cursor: "pointer",
-                            boxShadow: sel ? `0 0 0 2px #fff, 0 0 0 4px ${p.solid}` : "var(--shadow-card)",
-                          }} />
-                      );
-                    })}
-                    {(() => {
-                      const isCustom = !GRADIENT_PRESETS.some((p) => p.gradient === event.accent_color);
-                      const solid = acToSolid(event.accent_color);
-                      return (
-                        <div title="Custom color" style={{
-                          position: "relative", width: 40, height: 32, flexShrink: 0,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          cursor: "pointer", borderRadius: 12,
-                          background: isCustom ? solid : "var(--surface-2)",
-                          boxShadow: isCustom ? `0 0 0 2px #fff, 0 0 0 4px ${solid}` : "var(--shadow-card)",
-                        }}>
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                            stroke={isCustom ? "rgba(255,255,255,.85)" : "var(--ink-soft)"}
-                            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M2 22l1-1h3l9-9" /><path d="M3 21v-3l9-9" />
-                            <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8-2.2 2.2-1-1" />
-                          </svg>
-                          <input type="color" value={solid} onChange={(e) => update({ accent_color: e.target.value })}
-                            style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", padding: 0, border: 0 }} />
-                        </div>
-                      );
-                    })()}
+                            border: `1px solid ${event.post_duration_seconds === d ? "var(--mint-500)" : "var(--line)"}`,
+                            background: event.post_duration_seconds === d ? "rgba(92,201,167,.06)" : "var(--surface)",
+                            height: 32, padding: "0 14px",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <span style={{ fontWeight: 700, fontSize: 14, lineHeight: 1 }}>{d}</span>
+                            <span style={{ fontWeight: 500, color: "var(--ink-mute)", fontSize: 12, marginLeft: 4, lineHeight: 1 }}>Sec</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </SectionCard>
 
-                {/* Font */}
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 4 }}>Display font</div>
-                  <div style={{ color: "var(--ink-mute)", marginBottom: 12, fontSize: 14 }}>ฟอนต์ที่จะใช้แสดงชื่องานในมือถือของแขก และข้อความบนหน้าจอ</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                    {FONT_OPTIONS.map((f) => (
-                      <button key={f.value} onClick={() => update({ display_font: f.value })} style={{
-                        fontFamily: f.value, fontWeight: 600, borderRadius: 12, cursor: "pointer",
-                        border: `1px solid ${event.display_font === f.value ? "var(--mint-500)" : "var(--line)"}`,
-                        background: event.display_font === f.value ? "rgba(92,201,167,.06)" : "var(--surface)",
-                        color: "var(--ink)", fontSize: 14, height: 32, padding: "4px 14px",
-                      }}>{f.label}</button>
-                    ))}
+                {!isMobile && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 24, position: "sticky", top: 104 }}>
+                    {waitingPreview}
+                    {liveWallPreview}
                   </div>
-                </div>
+                )}
               </div>
-            </SectionCard>
 
-            <SectionCard title="ปรับแต่งหน้าจอไลฟ์">
-              <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-                {/* Waiting screen preview */}
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 8 }}>Waiting Screen Preview</div>
-                  <div style={{
-                    position: "relative", width: "100%", aspectRatio: "16/9",
-                    borderRadius: 16, overflow: "hidden", boxShadow: "var(--shadow-card)",
-                    containerType: "inline-size",
-                  }}>
-                    <IdleCard accent={event.accent_color} font={event.display_font}
-                      bg={event.display_bg_url} eventName={event.name} eventId={event.id} />
+              <div style={{
+                display: isMobile ? "block" : "grid",
+                gridTemplateColumns: isMobile ? undefined : "1fr 380px",
+                gap: 20, alignItems: "start",
+              }}>
+                <SectionCard title="ปรับแต่งหน้าจอมือถือแขก">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+                    {isMobile && guestPreview}
+
+                    {/* Guest hero */}
+                    <UploadZone
+                      label="Guest Screen Image"
+                      helper="รูปนี้จะแสดงในมือถือของแขกในหน้าแชร์ข้อความและรูปภาพ แนะนำให้ใช้รูปในแนวตั้ง อัตราส่วน 3:4"
+                      previewUrl={event.guest_bg_url}
+                      uploading={uploadingGuestBg}
+                      aspect="3/4"
+                      scale="height"
+                      height="40vh"
+                      onUpload={(f) => uploadBranding(f, "guest_bg_url", setUploadingGuestBg)}
+                      onRemove={() => removeBranding("guest_bg_url")}
+                    />
                   </div>
-                </div>
+                </SectionCard>
 
-                {/* Live wall preview */}
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 8 }}>Live Wall Screen Preview</div>
-                  <div style={{
-                    position: "relative", width: "100%", aspectRatio: "16/9",
-                    borderRadius: 16, overflow: "hidden", boxShadow: "var(--shadow-card)",
-                    containerType: "inline-size",
-                  }}>
-                    <LiveWallCard accent={event.accent_color}
-                      photo={event.guest_bg_url || "/photos/event-hero.jpg"}
-                      guestName="คุณบีม" message="ขอให้บ่าวสาวมีความสุขมากๆนะครับ ❤️" />
+                {!isMobile && (
+                  <div style={{ position: "sticky", top: 104 }}>
+                    {guestPreview}
                   </div>
-                </div>
-
-                {/* Display background */}
-                <UploadZone
-                  label="Display Screen Image"
-                  helper="รูปนี้จะแสดงบนหน้าจอในงานตอนที่รอแขกอัพโหลดรูปและข้อความ แนะนำให้ใช้รูปแนวนอนที่แคบกว่าความกว้างหน้าจอเล็กน้อย"
-                  previewUrl={event.display_bg_url}
-                  uploading={uploadingBg}
-                  aspect="3/4"
-                  scale="natural-height"
-                  height="40vh"
-                  onUpload={(f) => uploadBranding(f, "display_bg_url", setUploadingBg)}
-                  onRemove={() => removeBranding("display_bg_url")}
-                />
-
-                {/* Logo */}
-                <UploadZone
-                  label="Event Logo"
-                  helper="โลโก้จะปรากฏที่มุมล่างของหน้าจอในงาน แนะนำให้ใช้ไฟล์ PNG พื้นหลังโปร่งใส สามารถใช้ขนาดตามโลโก้ที่มีได้เลย"
-                  previewUrl={event.logo_url}
-                  uploading={uploadingLogo}
-                  scale="natural"
-                  height="30vh"
-                  onUpload={(f) => uploadBranding(f, "logo_url", setUploadingLogo)}
-                  onRemove={() => removeBranding("logo_url")}
-                />
-
-                {/* Duration */}
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 4 }}>Display pace</div>
-                  <div style={{ color: "var(--ink-mute)", marginBottom: 12, fontSize: 14 }}>ระยะเวลาที่แต่ละโพสต์ของแขกจะแสดงบนหน้าจอ</div>
-                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    {DURATIONS.map((d) => (
-                      <button key={d} onClick={() => update({ post_duration_seconds: d })} style={{
-                        borderRadius: 12, cursor: "pointer",
-                        border: `1px solid ${event.post_duration_seconds === d ? "var(--mint-500)" : "var(--line)"}`,
-                        background: event.post_duration_seconds === d ? "rgba(92,201,167,.06)" : "var(--surface)",
-                        height: 32, padding: "0 14px",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                      }}>
-                        <span style={{ fontWeight: 700, fontSize: 14, lineHeight: 1 }}>{d}</span>
-                        <span style={{ fontWeight: 500, color: "var(--ink-mute)", fontSize: 12, marginLeft: 4, lineHeight: 1 }}>Sec</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                )}
               </div>
-            </SectionCard>
-
-            <SectionCard title="ปรับแต่งหน้าจอมือถือแขก">
-              <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-                {/* Guest upload page preview */}
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 8 }}>Guest Screen Preview</div>
-                  <div style={{
-                    position: "relative", width: "100%", maxWidth: 280, margin: "0 auto", aspectRatio: "9/16",
-                    borderRadius: 16, overflow: "hidden", boxShadow: "var(--shadow-card)",
-                    containerType: "inline-size",
-                  }}>
-                    <GuestPreviewCard accent={event.accent_color} font={event.display_font}
-                      bg={event.guest_bg_url} eventName={event.name} eventDate={event.event_date} />
-                  </div>
-                </div>
-
-                {/* Guest hero */}
-                <UploadZone
-                  label="Guest Screen Image"
-                  helper="รูปนี้จะแสดงในมือถือของแขกในหน้าแชร์ข้อความและรูปภาพ แนะนำให้ใช้รูปในแนวตั้ง อัตราส่วน 3:4"
-                  previewUrl={event.guest_bg_url}
-                  uploading={uploadingGuestBg}
-                  aspect="3/4"
-                  scale="height"
-                  height="40vh"
-                  onUpload={(f) => uploadBranding(f, "guest_bg_url", setUploadingGuestBg)}
-                  onRemove={() => removeBranding("guest_bg_url")}
-                />
-              </div>
-            </SectionCard>
+            </div>
 
             {isDraft && (
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
