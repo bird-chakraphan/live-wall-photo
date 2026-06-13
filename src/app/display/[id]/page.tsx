@@ -1,6 +1,6 @@
 "use client";
 import { use, useEffect, useMemo, useRef, useState } from "react";
-import { gradientText, TestModeBanner, TestModeDiagonalOverlay } from "@/components/ui";
+import { gradientText, IdleCard, TestModeBanner, TestModeDiagonalOverlay } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 import type { SubmissionRow } from "@/types/db";
 
@@ -97,7 +97,7 @@ export default function DisplayPage({ params }: { params: Promise<{ id: string }
   return (
     <div style={{ position: "fixed", inset: 0, background: "#000", fontFamily: "var(--font-thai)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
       {isTestMode && <TestModeBanner />}
-      <div style={{ position: "relative", flex: 1, overflow: "hidden" }}>
+      <div style={{ position: "relative", flex: 1, overflow: "hidden", containerType: "inline-size" }}>
         {showLiveWall ? (
           <>
             {posts.map((p, i) => (
@@ -135,48 +135,6 @@ export default function DisplayPage({ params }: { params: Promise<{ id: string }
         )}
 
         {isTestMode && <TestModeDiagonalOverlay />}
-      </div>
-    </div>
-  );
-}
-
-function IdleCard({ accent, font, bg, eventName, eventId }: { accent: string; font: string; bg: string | null; eventName: string; eventId: string }) {
-  const guestUrl = typeof window !== "undefined" ? `${location.origin}/upload/${eventId}` : "";
-  // QR code generated client-side via a free QR API.
-  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(guestUrl)}`;
-  return (
-    <div style={{ position: "absolute", inset: 0, display: "flex", background: "#111" }}>
-      <div style={{ position: "relative", width: "62%", overflow: "hidden" }}>
-        <img src={bg || "/photos/couple-idle.jpg"} alt=""
-          style={{ width: "100%", height: "100%", objectFit: "cover", animation: "kenBurns 24s ease-in-out infinite" }} />
-        <div style={{ position: "absolute", top: 0, right: 0, bottom: 0, background: "linear-gradient(to right, transparent, #F2F1EF)", width: 221 }} />
-      </div>
-      <div style={{ flex: 1, background: "#F2F1EF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", padding: "52px 52px 44px" }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontFamily: font, fontSize: 46, fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1.1, ...gradientText(accent) }}>
-            {eventName}
-          </div>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 22 }}>
-          <div style={{ fontFamily: font, color: "var(--ink)", fontSize: 21 }}>สแกนเพื่อแชร์ช่วงเวลาของคุณ</div>
-          <div style={{ width: 244, height: 244, background: accent, borderRadius: 22, padding: 2.5, boxShadow: "0 16px 48px rgba(0,0,0,.10)" }}>
-            <div style={{ width: "100%", height: "100%", background: "#fff", borderRadius: 19.5, padding: 18, boxSizing: "border-box" }}>
-              <img src={qrSrc} alt="QR" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-            </div>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 0, background: "#fff", borderRadius: 16, border: "1px solid var(--line-soft)", overflow: "hidden", width: "100%" }}>
-          {[{ n: "1", t: "สแกน QR" }, { n: "2", t: "เลือกรูป" }, { n: "3", t: "ขึ้นจอใหญ่" }].map((s, i) => (
-            <div key={i} style={{ flex: 1, padding: "16px 12px", textAlign: "center", borderRight: i < 2 ? "1px solid var(--line-soft)" : "none" }}>
-              <div style={{ width: 28, height: 28, borderRadius: 999, background: accent, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 8px", color: "#fff", fontSize: 12, fontWeight: 800 }}>{s.n}</div>
-              <div style={{ fontFamily: font, fontSize: 13, color: "var(--ink)", fontWeight: 600 }}>{s.t}</div>
-            </div>
-          ))}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          <img src="/assets/sparkle-mint.svg" alt="" style={{ width: 14, height: 14 }} />
-          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-mute)" }}>WeddingTech</span>
-        </div>
       </div>
     </div>
   );

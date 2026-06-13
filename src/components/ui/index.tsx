@@ -423,6 +423,51 @@ export function TestModeBanner() {
   );
 }
 
+/* ──────────────── Display idle screen ──────────────── */
+// Shared between the live /display/[id] idle state and the Event Settings
+// preview, so the two never visually drift apart.
+export function IdleCard({ accent, font, bg, eventName, eventId }: { accent: string; font: string; bg: string | null; eventName: string; eventId: string }) {
+  const guestUrl = typeof window !== "undefined" ? `${location.origin}/upload/${eventId}` : "";
+  // QR code generated client-side via a free QR API.
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(guestUrl)}`;
+  return (
+    <div style={{ position: "absolute", inset: 0, display: "flex", background: "#111" }}>
+      <div style={{ position: "relative", width: "62%", overflow: "hidden" }}>
+        <img src={bg || "/photos/couple-idle.jpg"} alt=""
+          style={{ width: "100%", height: "100%", objectFit: "cover", animation: "kenBurns 24s ease-in-out infinite" }} />
+        <div style={{ position: "absolute", top: 0, right: 0, bottom: 0, background: "linear-gradient(to right, transparent, #F2F1EF)", width: "11.5cqw" }} />
+      </div>
+      <div style={{ flex: 1, background: "#F2F1EF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", padding: "2.7cqw 2.7cqw 2.3cqw" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontFamily: font, fontSize: "2.4cqw", fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1.1, ...gradientText(accent) }}>
+            {eventName}
+          </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1.15cqw" }}>
+          <div style={{ fontFamily: font, color: "var(--ink)", fontSize: "1.1cqw" }}>สแกนเพื่อแชร์ช่วงเวลาของคุณ</div>
+          <div style={{ width: "12.7cqw", aspectRatio: "1", background: accent, borderRadius: "1.15cqw", padding: "0.13cqw", boxShadow: "0 16px 48px rgba(0,0,0,.10)" }}>
+            <div style={{ width: "100%", height: "100%", background: "#fff", borderRadius: "1cqw", padding: "0.94cqw", boxSizing: "border-box" }}>
+              <img src={qrSrc} alt="QR" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 0, background: "#fff", borderRadius: "0.83cqw", border: "1px solid var(--line-soft)", overflow: "hidden", width: "100%" }}>
+          {[{ n: "1", t: "สแกน QR" }, { n: "2", t: "เลือกรูป" }, { n: "3", t: "ขึ้นจอใหญ่" }].map((s, i) => (
+            <div key={i} style={{ flex: 1, padding: "0.83cqw 0.625cqw", textAlign: "center", borderRight: i < 2 ? "1px solid var(--line-soft)" : "none" }}>
+              <div style={{ width: "1.46cqw", height: "1.46cqw", borderRadius: 999, background: accent, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 0.42cqw", color: "#fff", fontSize: "0.625cqw", fontWeight: 800 }}>{s.n}</div>
+              <div style={{ fontFamily: font, fontSize: "0.68cqw", color: "var(--ink)", fontWeight: 600 }}>{s.t}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.365cqw" }}>
+          <img src="/assets/sparkle-mint.svg" alt="" style={{ width: "0.73cqw", height: "0.73cqw" }} />
+          <span style={{ fontSize: "0.68cqw", fontWeight: 700, color: "var(--ink-mute)" }}>WeddingTech</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Full-screen diagonal "PREVIEW" texture — decorative, sits above all content.
 export function TestModeDiagonalOverlay() {
   return (

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Badge, Button, CopyableField, Field, gradientText, Modal, PlannerLayout, SectionCard, Spinner,
+  Badge, Button, CopyableField, Field, IdleCard, Modal, PlannerLayout, SectionCard, Spinner,
   UploadZone, acToSolid, useIsMobile,
 } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
@@ -219,6 +219,19 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
 
             <SectionCard title="ปรับแต่งหน้าจอ">
               <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+                {/* Live preview of the display screen's idle state */}
+                <div>
+                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 8 }}>Preview</div>
+                  <div style={{
+                    position: "relative", width: "100%", aspectRatio: "16/9",
+                    borderRadius: 16, overflow: "hidden", boxShadow: "var(--shadow-card)",
+                    containerType: "inline-size",
+                  }}>
+                    <IdleCard accent={event.accent_color} font={event.display_font}
+                      bg={event.display_bg_url} eventName={event.name} eventId={event.id} />
+                  </div>
+                </div>
+
                 {/* Display background */}
                 <UploadZone
                   label="Display Screen Image"
@@ -256,14 +269,6 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                   onUpload={(f) => uploadBranding(f, "logo_url", setUploadingLogo)}
                   onRemove={() => removeBranding("logo_url")}
                 />
-
-                {/* Event name preview */}
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 8 }}>Event name preview</div>
-                  <span style={{ fontFamily: event.display_font, fontSize: 18, fontWeight: 700, ...gradientText(event.accent_color) }}>
-                    {event.name}
-                  </span>
-                </div>
 
                 {/* Accent color */}
                 <div>
