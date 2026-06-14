@@ -152,9 +152,6 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
               )}
             </div>
             <div style={{ fontSize: 28, marginBottom: 6, fontWeight: 600, marginTop: 12 }}>{PRICE_BAHT.toLocaleString()}.00 บาท</div>
-            <div style={{ fontSize: 12, color: "var(--ink-mute)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <Spinner size={14} /> กำลังรอการชำระเงิน…
-            </div>
             <div style={{ fontSize: 12, color: "var(--ink-mute)", marginTop: 4 }}>เมื่อชำระเรียบร้อยแล้ว ระบบจะเปิดใช้งานอีเวนท์อัตโนมัติภายใน 1 นาที</div>
           </div>
         </SectionCard>
