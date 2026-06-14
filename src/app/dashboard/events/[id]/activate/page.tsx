@@ -151,12 +151,7 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
                 </div>
               )}
             </div>
-            {qrSrc && secondsLeft !== null && secondsLeft > 0 && (
-              <div style={{ fontSize: 12, color: secondsLeft <= 60 ? "var(--coral)" : "var(--ink-mute)", marginBottom: 12 }}>
-                QR ใช้ได้อีก {formatRemaining(secondsLeft)} — หากหมดเวลาระบบจะสร้าง QR ใหม่ให้อัตโนมัติ
-              </div>
-            )}
-            <div style={{ fontSize: 28, marginBottom: 6, fontWeight: 600 }}>{PRICE_BAHT.toLocaleString()}.00 บาท</div>
+            <div style={{ fontSize: 28, marginBottom: 6, fontWeight: 600, marginTop: 12 }}>{PRICE_BAHT.toLocaleString()}.00 บาท</div>
             <div style={{ fontSize: 12, color: "var(--ink-mute)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <Spinner size={14} /> กำลังรอการชำระเงิน…
             </div>
