@@ -15,6 +15,8 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
   const [event, setEvent] = useState<EventRow | null>(null);
   const [stage, setStage] = useState<"form" | "success">("form");
   const [qrSrc, setQrSrc] = useState<string | null>(null);
+  const [expiresAt, setExpiresAt] = useState<number | null>(null);
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -35,10 +37,29 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
     if (res.ok) {
       const j = await res.json();
       if (j.qr_image) setQrSrc(j.qr_image);
+      setExpiresAt(j.expires_at ? new Date(j.expires_at).getTime() : null);
     }
   };
 
   useEffect(() => { startCharge(); /* eslint-disable-line */ }, []);
+
+  // Countdown to QR expiry. When it hits zero, mint a fresh QR automatically
+  // (the promptpay route will create a new charge since the old one expired).
+  useEffect(() => {
+    if (stage !== "form" || !expiresAt) return;
+    const tick = () => {
+      const remaining = Math.round((expiresAt - Date.now()) / 1000);
+      setSecondsLeft(remaining);
+      if (remaining <= 0) {
+        setQrSrc(null);
+        setExpiresAt(null);
+        startCharge(); // eslint-disable-line
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [stage, expiresAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Poll event status — the Omise webhook flips it to active_ready once the
   // PromptPay charge confirms (see /api/webhooks/omise). Polling runs as soon
@@ -100,7 +121,8 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
 
         <SectionCard>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 20 }}>สแกน QR นี้ด้วยแอปธนาคารของคุณ เพื่อชำระเงิน</div>
+            <div style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 8 }}>สแกน QR นี้ด้วยแอปธนาคารของคุณ เพื่อชำระเงิน</div>
+            <div style={{ fontSize: 12, color: "var(--ink-mute)", marginBottom: 20 }}>QR นี้มีอายุการใช้งานจำกัด หากหมดเวลาระบบจะสร้าง QR ใหม่ให้อัตโนมัติ กรุณาอยู่ในหน้านี้จนกว่าการชำระเงินจะเสร็จสมบูรณ์</div>
             <div style={{ width: 200, minHeight: 283, margin: "0 auto 16px", borderRadius: 16, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#0E3D67", border: "2px solid #0E3D67", padding: 0 }}>
               {qrSrc ? (
                 <img src={qrSrc} alt="PromptPay QR" style={{ width: "100%", height: "auto", display: "block" }} />
@@ -113,6 +135,11 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
                 </div>
               )}
             </div>
+            {qrSrc && secondsLeft !== null && secondsLeft > 0 && (
+              <div style={{ fontSize: 12, color: secondsLeft <= 60 ? "var(--coral)" : "var(--ink-mute)", marginBottom: 12 }}>
+                QR ใช้ได้อีก {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")} นาที
+              </div>
+            )}
             <div style={{ fontSize: 28, marginBottom: 6, fontWeight: 600 }}>{PRICE_BAHT.toLocaleString()}.00 บาท</div>
             <div style={{ fontSize: 12, color: "var(--ink-mute)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <Spinner size={14} /> กำลังรอการชำระเงิน…

@@ -27,7 +27,7 @@ export async function POST(req: Request) {
       const existing = await omise().charges.retrieve(ev.omise_charge_id);
       if (existing.status === "pending") {
         const qrUrl = existing.source?.scannable_code?.image?.download_uri;
-        return NextResponse.json({ charge_id: existing.id, qr_image: qrUrl || "/assets/promptpay-qr.jpg" });
+        return NextResponse.json({ charge_id: existing.id, qr_image: qrUrl || "/assets/promptpay-qr.jpg", expires_at: existing.expires_at });
       }
     } catch {
       // charge lookup failed — fall through and create a new one
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     await supabase.from("events").update({ omise_charge_id: charge.id }).eq("id", event_id);
 
     const qrUrl = charge.source?.scannable_code?.image?.download_uri;
-    return NextResponse.json({ charge_id: charge.id, qr_image: qrUrl || "/assets/promptpay-qr.jpg" });
+    return NextResponse.json({ charge_id: charge.id, qr_image: qrUrl || "/assets/promptpay-qr.jpg", expires_at: charge.expires_at });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "omise_error";
     return NextResponse.json({ error: msg }, { status: 500 });

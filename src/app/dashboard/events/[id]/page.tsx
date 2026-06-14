@@ -46,6 +46,7 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
   const [uploadingBg, setUploadingBg] = useState(false);
   const [uploadingGuestBg, setUploadingGuestBg] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [justActivated, setJustActivated] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -57,6 +58,25 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
       setLoading(false);
     })();
   }, [id, supabase]);
+
+  // While waiting on payment, poll for the Omise webhook flipping the event
+  // to active_ready — covers the case where the planner left the activate
+  // page and paid later without revisiting it.
+  useEffect(() => {
+    if (!event || event.status !== "draft") return;
+    const interval = setInterval(async () => {
+      const { data } = await supabase.from("events").select("*").eq("id", id).single();
+      if (data && data.status !== "draft") {
+        setEvent(data as EventRow);
+        if (data.status === "active_ready") {
+          setJustActivated(true);
+          setTimeout(() => setJustActivated(false), 6000);
+        }
+        clearInterval(interval);
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [event?.status, id, supabase]);
 
   const update = useCallback(async (patch: Partial<EventRow>) => {
     if (!event) return;
@@ -159,6 +179,11 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
 
   return (
     <PlannerLayout userEmail={email} onLogoClick={() => router.push("/")} onLogout={async () => { await supabase.auth.signOut(); router.push("/"); }} hideHeader>
+      {justActivated && (
+        <div style={{ background: "var(--grad-mint)", color: "#fff", textAlign: "center", padding: "10px 16px", fontSize: 14, fontWeight: 600, marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw" }}>
+          🎉 ชำระเงินสำเร็จแล้ว! อีเวนต์ของคุณเปิดใช้งานแล้ว
+        </div>
+      )}
       {/* Row 1: Back to Dashboard / Saved indicator — normal flow, scrolls away */}
       {isActiveBanner ? (
         <div style={{ background: headerGrad, backgroundSize: `100% ${headerTotalH}px`, backgroundPosition: "0 0", padding: isMobile ? "10px 0 0" : "12px 0 0", marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw" }}>

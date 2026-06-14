@@ -1,7 +1,7 @@
 // Thin wrapper around the Omise SDK. The SDK has no types, so we declare the
 // minimal surface area we use.
 type OmiseSource = { id: string; type: string; scannable_code?: { image?: { download_uri?: string } } };
-type OmiseCharge = { id: string; status: string; source?: OmiseSource };
+type OmiseCharge = { id: string; status: string; expires_at?: string; source?: OmiseSource };
 type OmiseClient = {
   sources: { create: (params: Record<string, unknown>) => Promise<OmiseSource> };
   charges: {
