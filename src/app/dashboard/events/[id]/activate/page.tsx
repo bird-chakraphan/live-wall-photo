@@ -99,7 +99,7 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
             <div style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 20 }}>สแกน QR นี้ด้วยแอปธนาคารของคุณ เพื่อชำระเงิน</div>
             <div style={{ width: 200, minHeight: 200, margin: "0 auto 16px", borderRadius: 16, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#0E3D67", border: "2px solid #0E3D67" }}>
               {qrSrc ? (
-                <img src={qrSrc} alt="PromptPay QR" style={{ width: "100%", height: "auto", display: "block" }} />
+                <img src={qrSrc} alt="PromptPay QR" style={{ width: "108%", height: "auto", display: "block", margin: "-4%" }} />
               ) : (
                 <Spinner />
               )}
