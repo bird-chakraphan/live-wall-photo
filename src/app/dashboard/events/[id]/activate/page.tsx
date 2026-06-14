@@ -83,12 +83,16 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
           <div style={{ textTransform: "uppercase", color: "var(--ink-mute)", marginBottom: 14, fontSize: 14, letterSpacing: 1 }}>สรุปคำสั่งซื้อ</div>
           <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 14 }}>
             {event.name}
-            {event.event_date && <span style={{ fontWeight: 400, fontSize: 13, color: "var(--ink-mute)" }}> – {event.event_date}</span>}
+            {event.event_date && (
+              <span style={{ fontWeight: 400, fontSize: 13, color: "var(--ink-mute)" }}>
+                {" "}– {new Date(event.event_date).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+              </span>
+            )}
           </div>
           <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <div style={{ fontSize: 14, fontWeight: 600 }}>เปิดใช้งานอีเวนต์</div>
-              <div style={{ fontSize: 12, color: "var(--ink-mute)" }}>สามารถไลฟ์ได้นานถึง 6 ชม.</div>
+              <div style={{ fontSize: 12, color: "var(--ink-mute)" }}>สามารถไลฟ์ได้นานถึง 6 ชม. หลังจากเปิดใช้งานแล้วสามารถเริ่มไลฟ์เมื่อไหร่ก็ได้</div>
             </div>
             <div style={{ fontSize: 28, fontWeight: 600 }}>{PRICE_BAHT.toLocaleString()}.00 บาท</div>
           </div>
@@ -113,6 +117,7 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
             <div style={{ fontSize: 12, color: "var(--ink-mute)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <Spinner size={14} /> กำลังรอการชำระเงิน…
             </div>
+            <div style={{ fontSize: 12, color: "var(--ink-mute)", marginTop: 4 }}>การชำระเงินมักได้รับการยืนยันภายใน 30 วินาที</div>
           </div>
         </SectionCard>
       </div>
