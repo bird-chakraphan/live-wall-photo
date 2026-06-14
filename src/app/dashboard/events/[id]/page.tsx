@@ -74,7 +74,7 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
         }
         clearInterval(interval);
       }
-    }, 10000);
+    }, 30000);
     return () => clearInterval(interval);
   }, [event?.status, id, supabase]);
 
