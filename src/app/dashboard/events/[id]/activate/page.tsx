@@ -101,7 +101,10 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
               {qrSrc ? (
                 <img src={qrSrc} alt="PromptPay QR" style={{ width: "100%", height: "auto", display: "block" }} />
               ) : (
-                <Spinner />
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, color: "#fff" }}>
+                  <Spinner color="#fff" />
+                  <div style={{ fontSize: 13 }}>กำลังโหลดพร้อมเพย์...</div>
+                </div>
               )}
             </div>
             <div style={{ fontSize: 28, marginBottom: 6, fontWeight: 600 }}>{PRICE_BAHT.toLocaleString()}.00 บาท</div>
