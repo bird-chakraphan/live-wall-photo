@@ -180,8 +180,21 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
   return (
     <PlannerLayout userEmail={email} onLogoClick={() => router.push("/")} onLogout={async () => { await supabase.auth.signOut(); router.push("/"); }} hideHeader>
       {justActivated && (
-        <div style={{ background: "var(--grad-mint)", color: "#fff", textAlign: "center", padding: "10px 16px", fontSize: 14, fontWeight: 600, marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw" }}>
-          🎉 ชำระเงินสำเร็จแล้ว! อีเวนต์ของคุณเปิดใช้งานแล้ว
+        <div style={{
+          background: "var(--grad-mint)", color: "#fff",
+          padding: "12px 16px", marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+          fontSize: 14, fontWeight: 600, boxShadow: "0 4px 16px rgba(92,201,167,.35)",
+          animation: "banner-slide-down .35s ease-out",
+        }}>
+          <span style={{ width: 24, height: 24, borderRadius: 999, background: "rgba(255,255,255,.25)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>🎉</span>
+          <span>ชำระเงินสำเร็จแล้ว! อีเวนต์ของคุณเปิดใช้งานแล้ว</span>
+          <style jsx>{`
+            @keyframes banner-slide-down {
+              from { opacity: 0; transform: translateY(-100%); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+          `}</style>
         </div>
       )}
       {/* Row 1: Back to Dashboard / Saved indicator — normal flow, scrolls away */}
