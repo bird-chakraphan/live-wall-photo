@@ -279,7 +279,7 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                 <span onClick={() => isDraft && setEditingTitle(true)} style={{ fontWeight: 800, color: "var(--ink)", fontSize: 26, flex: isMobile ? "none" : 1, cursor: isDraft ? "text" : "default" }}>{event.name}</span>
               )}
               {isDraft && (
-                <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "stretch" : "center", gap: isMobile ? 4 : 12, width: isMobile ? "100%" : "auto" }}>
+                <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "stretch" : "center", gap: 12, width: isMobile ? "100%" : "auto" }}>
                   {!isMobile && chargeSecondsLeft !== null && chargeSecondsLeft > 0 && (
                     <div style={{ fontSize: 12, color: "var(--ink-mute)", textAlign: "right", whiteSpace: "nowrap" }}>
                       กรุณาชำระภายใน {formatRemaining(chargeSecondsLeft)}
