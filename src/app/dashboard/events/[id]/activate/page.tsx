@@ -91,7 +91,7 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
 
   if (stage === "success") {
     return (
-      <PlannerLayout>
+      <PlannerLayout hideHeader>
         <div style={{ padding: "48px 20px 60px", textAlign: "center" }}>
           <div style={{ width: 72, height: 72, borderRadius: 999, background: "var(--grad-mint)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, margin: "0 auto 24px", boxShadow: "0 8px 24px rgba(92,201,167,.36)" }}>🎉</div>
           <div style={{ fontSize: 32, fontWeight: 800, marginBottom: 12 }}>ยืนยันการชำระเงินแล้ว!</div>
@@ -103,11 +103,11 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
   }
 
   if (!event) {
-    return <PlannerLayout><div style={{ padding: 60, textAlign: "center" }}><Spinner /></div></PlannerLayout>;
+    return <PlannerLayout hideHeader><div style={{ padding: 60, textAlign: "center" }}><Spinner /></div></PlannerLayout>;
   }
 
   return (
-    <PlannerLayout>
+    <PlannerLayout hideHeader>
       <div style={{ padding: isMobile ? "20px 16px 60px" : "32px 40px 80px" }}>
         <Link href={`/dashboard/events/${id}`} style={{ fontSize: 13, color: "var(--coral)" }}>← กลับไปการตั้งค่า</Link>
         <h1 style={{ fontSize: 28, fontWeight: 800, margin: "16px 0 28px" }}>ชำระเงินเพื่อเปิดใช้งานอีเวนต์</h1>
