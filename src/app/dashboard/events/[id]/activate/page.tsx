@@ -122,7 +122,11 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
         <SectionCard>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 8 }}>สแกน QR นี้ด้วยแอปธนาคารของคุณ เพื่อชำระเงิน</div>
-            <div style={{ fontSize: 12, color: "var(--ink-mute)", marginBottom: 20 }}>QR นี้มีอายุการใช้งานจำกัด หากหมดเวลาระบบจะสร้าง QR ใหม่ให้อัตโนมัติ กรุณาอยู่ในหน้านี้จนกว่าการชำระเงินจะเสร็จสมบูรณ์</div>
+            <div style={{ fontSize: 12, color: "var(--ink-mute)", marginBottom: 20 }}>
+              {secondsLeft !== null && secondsLeft > 0
+                ? `QR นี้มีอายุการใช้งานจำกัด กรุณาชำระภายใน ${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, "0")} นาที`
+                : "QR นี้มีอายุการใช้งานจำกัด กรุณาอยู่ในหน้านี้จนกว่าการชำระเงินจะเสร็จสมบูรณ์"}
+            </div>
             <div style={{ width: 200, minHeight: 283, margin: "0 auto 16px", borderRadius: 16, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#0E3D67", border: "2px solid #0E3D67", padding: 0 }}>
               {qrSrc ? (
                 <img src={qrSrc} alt="PromptPay QR" style={{ width: "100%", height: "auto", display: "block" }} />
@@ -137,7 +141,7 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
             </div>
             {qrSrc && secondsLeft !== null && secondsLeft > 0 && (
               <div style={{ fontSize: 12, color: secondsLeft <= 60 ? "var(--coral)" : "var(--ink-mute)", marginBottom: 12 }}>
-                QR ใช้ได้อีก {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")} นาที
+                QR ใช้ได้อีก {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")} นาที — หากหมดเวลาระบบจะสร้าง QR ใหม่ให้อัตโนมัติ
               </div>
             )}
             <div style={{ fontSize: 28, marginBottom: 6, fontWeight: 600 }}>{PRICE_BAHT.toLocaleString()}.00 บาท</div>
