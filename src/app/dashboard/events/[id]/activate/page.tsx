@@ -101,9 +101,11 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
               {qrSrc ? (
                 <img src={qrSrc} alt="PromptPay QR" style={{ width: "100%", height: "auto", display: "block" }} />
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: "#fff", width: "100%", padding: "0 16px", boxSizing: "border-box", textAlign: "center" }}>
-                  <Spinner size={20} color="#fff" />
-                  <div style={{ fontSize: 13 }}>กำลังโหลดพร้อมเพย์...</div>
+                <div style={{ paddingBottom: 15 }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: "#fff", width: "100%", padding: "0 16px", boxSizing: "border-box", textAlign: "center" }}>
+                    <Spinner size={20} color="#fff" />
+                    <div style={{ fontSize: 13 }}>กำลังโหลดพร้อมเพย์...</div>
+                  </div>
                 </div>
               )}
             </div>
