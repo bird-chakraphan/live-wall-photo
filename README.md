@@ -100,6 +100,38 @@ See the handoff doc for the full list:
 - 90-day data retention from event date. Schema includes `retention_until`;
   scheduler is left to be wired.
 
+## Testing
+
+```bash
+npm run test:unit   # Vitest — pure logic (moderation auto-approve, gradientText, accent-color helpers)
+npm run test:e2e    # Playwright — e2e smoke test(s)
+npm test            # both
+```
+
+### Unit tests (Vitest)
+No external services required — `src/lib/moderation.test.ts` and
+`src/components/ui/ui.test.tsx` cover the moderation auto-approve fallback and
+the `acToSolid` / `gradientText` accent-color helpers.
+
+### E2E smoke test (Playwright)
+`e2e/guest-upload.spec.ts` drives `/upload/[id]` for a real `active_ready`
+event against your configured Supabase project (the one in `.env.local`) and
+checks the submission lands with `status = approved` (the auto-approve path,
+since moderation keys are unset in dev).
+
+It needs a `TEST_EVENT_ID` pointing at an `active_ready` (or `active_live`)
+event. To seed one:
+
+```bash
+npm run seed:e2e        # creates/reuses an event, prints its id
+TEST_EVENT_ID=<id> npm run test:e2e
+```
+
+If `TEST_EVENT_ID` isn't set, the e2e test is skipped (so `npm test` still
+passes in environments without a configured Supabase project). Playwright
+starts `npm run dev` automatically if a dev server isn't already running on
+`localhost:3000`.
+
 ## What's stubbed / left to wire
 
 - **Omise webhook** — `/api/events/[id]/activate` currently trusts the planner
