@@ -279,12 +279,17 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                 <span onClick={() => isDraft && setEditingTitle(true)} style={{ fontWeight: 800, color: "var(--ink)", fontSize: 26, flex: isMobile ? "none" : 1, cursor: isDraft ? "text" : "default" }}>{event.name}</span>
               )}
               {isDraft && (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? "stretch" : "flex-end", gap: 4, width: isMobile ? "100%" : "auto" }}>
+                <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "stretch" : "center", gap: isMobile ? 4 : 12, width: isMobile ? "100%" : "auto" }}>
+                  {!isMobile && chargeSecondsLeft !== null && chargeSecondsLeft > 0 && (
+                    <div style={{ fontSize: 12, color: "var(--ink-mute)", textAlign: "right", whiteSpace: "nowrap" }}>
+                      กรุณาชำระภายใน {formatRemaining(chargeSecondsLeft)}
+                    </div>
+                  )}
                   <Link href={`/dashboard/events/${event.id}/activate`}>
                     <Button variant="primary" fullWidth={isMobile}>Activate Event — เพียง 1,400 บาท</Button>
                   </Link>
-                  {chargeSecondsLeft !== null && chargeSecondsLeft > 0 && (
-                    <div style={{ fontSize: 12, color: "var(--ink-mute)", textAlign: isMobile ? "left" : "right" }}>
+                  {isMobile && chargeSecondsLeft !== null && chargeSecondsLeft > 0 && (
+                    <div style={{ fontSize: 12, color: "var(--ink-mute)", textAlign: "right" }}>
                       กรุณาชำระภายใน {formatRemaining(chargeSecondsLeft)}
                     </div>
                   )}
