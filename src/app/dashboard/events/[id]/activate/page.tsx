@@ -13,8 +13,8 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
   const router = useRouter();
   const isMobile = useIsMobile();
   const [event, setEvent] = useState<EventRow | null>(null);
-  const [stage, setStage] = useState<"form" | "confirming" | "success">("form");
-  const [qrSrc, setQrSrc] = useState<string>("/assets/promptpay-qr.jpg");
+  const [stage, setStage] = useState<"form" | "success">("form");
+  const [qrSrc, setQrSrc] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -41,9 +41,10 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
   useEffect(() => { startCharge(); /* eslint-disable-line */ }, []);
 
   // Poll event status — the Omise webhook flips it to active_ready once the
-  // PromptPay charge confirms (see /api/webhooks/omise).
+  // PromptPay charge confirms (see /api/webhooks/omise). Polling runs as soon
+  // as the QR is shown so the page auto-advances without user input.
   useEffect(() => {
-    if (stage !== "confirming") return;
+    if (stage !== "form") return;
     const supabase = createClient();
     const interval = setInterval(async () => {
       const { data } = await supabase.from("events").select("status").eq("id", id).single();
@@ -54,8 +55,6 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
     }, 2000);
     return () => clearInterval(interval);
   }, [stage, id]);
-
-  const confirm = () => setStage("confirming");
 
   if (stage === "success") {
     return (
@@ -98,14 +97,17 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
         <SectionCard>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 20 }}>สแกน QR นี้ด้วยแอปธนาคารของคุณ เพื่อชำระเงิน</div>
-            <div style={{ width: 200, height: 200, margin: "0 auto 16px", borderRadius: 16, overflow: "hidden" }}>
-              <img src={qrSrc} alt="PromptPay QR" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <div style={{ width: 200, height: 200, margin: "0 auto 16px", borderRadius: 16, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface-2)" }}>
+              {qrSrc ? (
+                <img src={qrSrc} alt="PromptPay QR" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              ) : (
+                <Spinner />
+              )}
             </div>
             <div style={{ fontSize: 28, marginBottom: 6, fontWeight: 600 }}>{PRICE_BAHT.toLocaleString()}.00 บาท</div>
-            <div style={{ fontSize: 12, color: "var(--ink-mute)", marginBottom: 24 }}>การชำระเงินมักได้รับการยืนยันภายใน 30 วินาที</div>
-            <Button variant="primary" fullWidth disabled={stage === "confirming"} onClick={confirm}>
-              {stage === "confirming" ? <><Spinner size={18} color="#fff" /> กำลังยืนยัน…</> : "ชำระเรียบร้อยแล้ว"}
-            </Button>
+            <div style={{ fontSize: 12, color: "var(--ink-mute)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <Spinner size={14} /> กำลังรอการชำระเงิน…
+            </div>
           </div>
         </SectionCard>
       </div>
