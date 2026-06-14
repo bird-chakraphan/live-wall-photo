@@ -133,7 +133,7 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
 
         <SectionCard>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 8 }}>สแกน QR นี้ด้วยแอปธนาคารของคุณ เพื่อชำระเงิน</div>
+            <div style={{ fontSize: 16, color: "var(--ink-soft)", marginBottom: 8 }}>สแกน QR นี้ด้วยแอปธนาคารของคุณ เพื่อชำระเงิน</div>
             <div style={{ fontSize: 12, color: "var(--ink-mute)", marginBottom: 20 }}>
               {secondsLeft !== null && secondsLeft > 0
                 ? `QR นี้มีอายุการใช้งานจำกัด กรุณาชำระภายใน ${formatRemaining(secondsLeft)}`
