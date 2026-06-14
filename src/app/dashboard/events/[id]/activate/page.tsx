@@ -89,7 +89,7 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
               </span>
             )}
           </div>
-          <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14, display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 10 : 0, justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center" }}>
             <div>
               <div style={{ fontSize: 14, fontWeight: 600 }}>เปิดใช้งานอีเวนต์</div>
               <div style={{ fontSize: 12, color: "var(--ink-mute)" }}>สามารถไลฟ์ได้นานถึง 6 ชม. หลังจากเปิดใช้งานแล้วสามารถเริ่มไลฟ์เมื่อไหร่ก็ได้</div>
