@@ -531,15 +531,17 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
             </div>
 
             {isDraft && (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? "stretch" : "flex-end", gap: 4 }}>
-                <Link href={`/dashboard/events/${event.id}/activate`}>
-                  <Button variant="primary" fullWidth={isMobile}>Activate Event — เพียง 1,400 บาท</Button>
-                </Link>
-                {chargeSecondsLeft !== null && chargeSecondsLeft > 0 && (
-                  <div style={{ fontSize: 12, color: "var(--ink-mute)", textAlign: isMobile ? "left" : "right" }}>
-                    กรุณาชำระภายใน {formatRemaining(chargeSecondsLeft)}
-                  </div>
-                )}
+              <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: "center", justifyContent: "flex-end", gap: isMobile ? 12 : 20 }}>
+                <div style={{ fontSize: 13, color: "var(--ink-mute)", textAlign: isMobile ? "center" : "right" }}>
+                  หลังจากเปิดใช้งานอีเวนท์แล้ว สามารถเริ่มไลฟ์เมื่อไหร่ก็ได้
+                  <br />
+                  ไม่จำเป็นต้องไลฟ์ทันที และสามารถไลฟ์ได้นาน 6 ชั่วโมง
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? "stretch" : "flex-end", gap: 4, width: isMobile ? "100%" : "auto" }}>
+                  <Link href={`/dashboard/events/${event.id}/activate`}>
+                    <Button variant="primary" fullWidth={isMobile}>Activate Event — เพียง 1,400 บาท</Button>
+                  </Link>
+                </div>
               </div>
             )}
             {isReady && (
