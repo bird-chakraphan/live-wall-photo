@@ -97,9 +97,9 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
         <SectionCard>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 20 }}>สแกน QR นี้ด้วยแอปธนาคารของคุณ เพื่อชำระเงิน</div>
-            <div style={{ width: 200, height: 200, margin: "0 auto 16px", borderRadius: 16, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface-2)" }}>
+            <div style={{ width: 200, minHeight: 200, margin: "0 auto 16px", borderRadius: 16, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface-2)" }}>
               {qrSrc ? (
-                <img src={qrSrc} alt="PromptPay QR" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                <img src={qrSrc} alt="PromptPay QR" style={{ width: "100%", height: "auto", display: "block" }} />
               ) : (
                 <Spinner />
               )}
