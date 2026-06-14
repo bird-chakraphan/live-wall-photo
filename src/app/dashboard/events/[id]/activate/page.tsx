@@ -137,7 +137,7 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
             <div style={{ fontSize: 12, color: "var(--ink-mute)", marginBottom: 20 }}>
               {secondsLeft !== null && secondsLeft > 0
                 ? `QR นี้มีอายุการใช้งานจำกัด กรุณาชำระภายใน ${formatRemaining(secondsLeft)}`
-                : "QR นี้มีอายุการใช้งานจำกัด กรุณาอยู่ในหน้านี้จนกว่าการชำระเงินจะเสร็จสมบูรณ์"}
+                : "QR นี้มีอายุการใช้งานจำกัด"}
             </div>
             <div style={{ width: 200, minHeight: 283, margin: "0 auto 16px", borderRadius: 16, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#0E3D67", border: "2px solid #0E3D67", padding: 0 }}>
               {qrSrc ? (
