@@ -101,8 +101,8 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
               {qrSrc ? (
                 <img src={qrSrc} alt="PromptPay QR" style={{ width: "100%", height: "auto", display: "block" }} />
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 12, color: "#fff" }}>
-                  <Spinner color="#fff" />
+                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, color: "#fff" }}>
+                  <Spinner size={16} color="#fff" />
                   <div style={{ fontSize: 13 }}>กำลังโหลดพร้อมเพย์...</div>
                 </div>
               )}
