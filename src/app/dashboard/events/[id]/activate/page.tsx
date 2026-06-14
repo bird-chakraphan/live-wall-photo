@@ -8,6 +8,18 @@ import type { EventRow } from "@/types/db";
 
 const PRICE_BAHT = 1400;
 
+// Formats a remaining-time duration for the QR expiry messaging — Omise's
+// PromptPay charges can stay valid for hours, so collapse to "X ชม. Y นาที"
+// once we're past the minute-and-seconds range.
+function formatRemaining(seconds: number) {
+  if (seconds >= 3600) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours} ชม. ${minutes} นาที`;
+  }
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")} นาที`;
+}
+
 export default function ActivatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
@@ -124,7 +136,7 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
             <div style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 8 }}>สแกน QR นี้ด้วยแอปธนาคารของคุณ เพื่อชำระเงิน</div>
             <div style={{ fontSize: 12, color: "var(--ink-mute)", marginBottom: 20 }}>
               {secondsLeft !== null && secondsLeft > 0
-                ? `QR นี้มีอายุการใช้งานจำกัด กรุณาชำระภายใน ${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, "0")} นาที`
+                ? `QR นี้มีอายุการใช้งานจำกัด กรุณาชำระภายใน ${formatRemaining(secondsLeft)}`
                 : "QR นี้มีอายุการใช้งานจำกัด กรุณาอยู่ในหน้านี้จนกว่าการชำระเงินจะเสร็จสมบูรณ์"}
             </div>
             <div style={{ width: 200, minHeight: 283, margin: "0 auto 16px", borderRadius: 16, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#0E3D67", border: "2px solid #0E3D67", padding: 0 }}>
@@ -141,7 +153,7 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
             </div>
             {qrSrc && secondsLeft !== null && secondsLeft > 0 && (
               <div style={{ fontSize: 12, color: secondsLeft <= 60 ? "var(--coral)" : "var(--ink-mute)", marginBottom: 12 }}>
-                QR ใช้ได้อีก {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")} นาที — หากหมดเวลาระบบจะสร้าง QR ใหม่ให้อัตโนมัติ
+                QR ใช้ได้อีก {formatRemaining(secondsLeft)} — หากหมดเวลาระบบจะสร้าง QR ใหม่ให้อัตโนมัติ
               </div>
             )}
             <div style={{ fontSize: 28, marginBottom: 6, fontWeight: 600 }}>{PRICE_BAHT.toLocaleString()}.00 บาท</div>
