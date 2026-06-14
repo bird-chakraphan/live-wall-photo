@@ -17,6 +17,7 @@ export interface EventRow {
   guest_bg_url: string | null;
   logo_url: string | null;
   logo_size: LogoSize;
+  omise_charge_id: string | null;
   live_started_at: string | null;
   live_expires_at: string | null;
   paused: boolean;

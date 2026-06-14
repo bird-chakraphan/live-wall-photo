@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-// Marks an event as active_ready. In production this would only run after a
-// successful Omise webhook — for now we trust the planner-initiated client call
-// (RLS still scopes it to events they own).
+// Dev-only stub: marks an event as active_ready without a real payment.
+// In production this is done by /api/webhooks/omise after the Omise charge
+// confirms — this route is gated to when OMISE_SECRET_KEY isn't configured.
 export async function POST(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+  if (process.env.OMISE_SECRET_KEY) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
   const { id } = await ctx.params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

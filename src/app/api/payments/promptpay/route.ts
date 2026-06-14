@@ -32,6 +32,8 @@ export async function POST(req: Request) {
       source: source.id,
       metadata: { event_id, account_id: user.id },
     });
+    await supabase.from("events").update({ omise_charge_id: charge.id }).eq("id", event_id);
+
     const qrUrl = charge.source?.scannable_code?.image?.download_uri;
     return NextResponse.json({ charge_id: charge.id, qr_image: qrUrl || "/assets/promptpay-qr.jpg" });
   } catch (e) {

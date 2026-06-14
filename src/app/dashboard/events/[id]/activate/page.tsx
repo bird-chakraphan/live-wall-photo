@@ -40,14 +40,22 @@ export default function ActivatePage({ params }: { params: Promise<{ id: string 
 
   useEffect(() => { startCharge(); /* eslint-disable-line */ }, []);
 
-  const confirm = async () => {
-    // In production: poll /api/payments/[chargeId] or wait for webhook.
-    // For now: mark event as active_ready (server enforces auth).
-    setStage("confirming");
-    const res = await fetch(`/api/events/${id}/activate`, { method: "POST" });
-    if (res.ok) setStage("success");
-    else setStage("form");
-  };
+  // Poll event status — the Omise webhook flips it to active_ready once the
+  // PromptPay charge confirms (see /api/webhooks/omise).
+  useEffect(() => {
+    if (stage !== "confirming") return;
+    const supabase = createClient();
+    const interval = setInterval(async () => {
+      const { data } = await supabase.from("events").select("status").eq("id", id).single();
+      if (data?.status === "active_ready") {
+        clearInterval(interval);
+        setStage("success");
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [stage, id]);
+
+  const confirm = () => setStage("confirming");
 
   if (stage === "success") {
     return (
