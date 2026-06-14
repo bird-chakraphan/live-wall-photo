@@ -289,7 +289,7 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                     <Button variant="primary" fullWidth={isMobile}>Activate Event — เพียง 1,400 บาท</Button>
                   </Link>
                   {isMobile && chargeSecondsLeft !== null && chargeSecondsLeft > 0 && (
-                    <div style={{ fontSize: 12, color: "var(--ink-mute)", textAlign: "right" }}>
+                    <div style={{ fontSize: 12, color: "var(--ink-mute)", textAlign: "center" }}>
                       กรุณาชำระภายใน {formatRemaining(chargeSecondsLeft)}
                     </div>
                   )}
