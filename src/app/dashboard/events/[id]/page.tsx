@@ -7,6 +7,7 @@ import {
   UploadZone, acToSolid, useIsMobile,
 } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
+import { formatRemaining } from "@/lib/format";
 import type { EventRow, EventStatus, LogoSize } from "@/types/db";
 
 const GRADIENT_PRESETS = [
@@ -47,6 +48,7 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
   const [uploadingGuestBg, setUploadingGuestBg] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [justActivated, setJustActivated] = useState(false);
+  const [chargeSecondsLeft, setChargeSecondsLeft] = useState<number | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -77,6 +79,20 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
     }, 30000);
     return () => clearInterval(interval);
   }, [event?.status, id, supabase]);
+
+  // Tick down the active PromptPay charge's expiry so the "Activate Event"
+  // button can show how long the planner has left to pay.
+  useEffect(() => {
+    const expiresAt = event?.omise_charge_expires_at ? new Date(event.omise_charge_expires_at).getTime() : null;
+    if (event?.status !== "draft" || !expiresAt) {
+      setChargeSecondsLeft(null);
+      return;
+    }
+    const tick = () => setChargeSecondsLeft(Math.max(0, Math.round((expiresAt - Date.now()) / 1000)));
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [event?.status, event?.omise_charge_expires_at]);
 
   const update = useCallback(async (patch: Partial<EventRow>) => {
     if (!event) return;
@@ -263,9 +279,16 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                 <span onClick={() => isDraft && setEditingTitle(true)} style={{ fontWeight: 800, color: "var(--ink)", fontSize: 26, flex: isMobile ? "none" : 1, cursor: isDraft ? "text" : "default" }}>{event.name}</span>
               )}
               {isDraft && (
-                <Link href={`/dashboard/events/${event.id}/activate`}>
-                  <Button variant="primary" fullWidth={isMobile}>Activate Event — เพียง 1,400 บาท</Button>
-                </Link>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? "stretch" : "flex-end", gap: 4, width: isMobile ? "100%" : "auto" }}>
+                  <Link href={`/dashboard/events/${event.id}/activate`}>
+                    <Button variant="primary" fullWidth={isMobile}>Activate Event — เพียง 1,400 บาท</Button>
+                  </Link>
+                  {chargeSecondsLeft !== null && chargeSecondsLeft > 0 && (
+                    <div style={{ fontSize: 12, color: "var(--ink-mute)", textAlign: isMobile ? "left" : "right" }}>
+                      กรุณาชำระภายใน {formatRemaining(chargeSecondsLeft)}
+                    </div>
+                  )}
+                </div>
               )}
               {isEnded && (
                 <div style={{ display: "flex", alignItems: "center", padding: "0 18px", height: 40, borderRadius: 10, border: "1px solid var(--line)", background: "#E9E9E9", color: "#898D94", fontWeight: 600 }}>Event Ended</div>
@@ -503,10 +526,15 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
             </div>
 
             {isDraft && (
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? "stretch" : "flex-end", gap: 4 }}>
                 <Link href={`/dashboard/events/${event.id}/activate`}>
                   <Button variant="primary" fullWidth={isMobile}>Activate Event — เพียง 1,400 บาท</Button>
                 </Link>
+                {chargeSecondsLeft !== null && chargeSecondsLeft > 0 && (
+                  <div style={{ fontSize: 12, color: "var(--ink-mute)", textAlign: isMobile ? "left" : "right" }}>
+                    กรุณาชำระภายใน {formatRemaining(chargeSecondsLeft)}
+                  </div>
+                )}
               </div>
             )}
             {isReady && (

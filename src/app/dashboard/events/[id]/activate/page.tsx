@@ -4,21 +4,10 @@ import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { Button, PlannerLayout, SectionCard, Spinner, useIsMobile } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
+import { formatRemaining } from "@/lib/format";
 import type { EventRow } from "@/types/db";
 
 const PRICE_BAHT = 1400;
-
-// Formats a remaining-time duration for the QR expiry messaging — Omise's
-// PromptPay charges can stay valid for hours, so collapse to "X ชม. Y นาที"
-// once we're past the minute-and-seconds range.
-function formatRemaining(seconds: number) {
-  if (seconds >= 3600) {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours} ชม. ${minutes} นาที`;
-  }
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")} นาที`;
-}
 
 export default function ActivatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);

@@ -27,6 +27,7 @@ export async function POST(req: Request) {
       const existing = await omise().charges.retrieve(ev.omise_charge_id);
       if (existing.status === "pending") {
         const qrUrl = existing.source?.scannable_code?.image?.download_uri;
+        await supabase.from("events").update({ omise_charge_expires_at: existing.expires_at }).eq("id", event_id);
         return NextResponse.json({ charge_id: existing.id, qr_image: qrUrl || "/assets/promptpay-qr.jpg", expires_at: existing.expires_at });
       }
     } catch {
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
       source: source.id,
       metadata: { event_id, account_id: user.id },
     });
-    await supabase.from("events").update({ omise_charge_id: charge.id }).eq("id", event_id);
+    await supabase.from("events").update({ omise_charge_id: charge.id, omise_charge_expires_at: charge.expires_at }).eq("id", event_id);
 
     const qrUrl = charge.source?.scannable_code?.image?.download_uri;
     return NextResponse.json({ charge_id: charge.id, qr_image: qrUrl || "/assets/promptpay-qr.jpg", expires_at: charge.expires_at });
