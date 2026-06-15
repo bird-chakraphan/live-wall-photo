@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import { gradientText, Spinner } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 import type { EventRow, SubmissionRow } from "@/types/db";
@@ -18,6 +18,7 @@ export default function ControlPanelPage({ params }: { params: Promise<{ id: str
   // derive elapsed time from the display's actual timer instead of running
   // an independent guess (#14/#15).
   const [nowPlayingSync, setNowPlayingSync] = useState<{ postId: string; durationMs: number; startedAt: number } | null>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // Load + subscribe
   useEffect(() => {
@@ -38,7 +39,8 @@ export default function ControlPanelPage({ params }: { params: Promise<{ id: str
         setNowPlayingSync({ postId: payload.postId, durationMs: payload.durationMs, startedAt: Date.now() });
       })
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    channelRef.current = ch;
+    return () => { supabase.removeChannel(ch); channelRef.current = null; };
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [id]);
 
@@ -90,6 +92,9 @@ export default function ControlPanelPage({ params }: { params: Promise<{ id: str
   };
   const pinItem = async (subId: string) => {
     await supabase.from("submissions").update({ pinned: true }).eq("id", subId);
+  };
+  const jumpToNow = (postId: string) => {
+    channelRef.current?.send({ type: "broadcast", event: "jump_to_post", payload: { postId } });
   };
 
   if (!event) {
@@ -152,6 +157,7 @@ export default function ControlPanelPage({ params }: { params: Promise<{ id: str
                   <div style={{ fontSize: 12, color: D.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.message}</div>
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
+                  <button onClick={() => jumpToNow(item.id)} title="Jump to now" style={{ background: "rgba(255,255,255,.06)", border: 0, borderRadius: 8, height: 34, padding: "0 10px", color: D.text, fontSize: 13, cursor: "pointer" }}>▶ Now</button>
                   {!item.pinned && (
                     <button onClick={() => pinItem(item.id)} title="Pin next" style={{ background: "rgba(255,255,255,.06)", border: 0, borderRadius: 8, height: 34, padding: "0 10px", color: D.text, fontSize: 13, cursor: "pointer" }}>📌</button>
                   )}

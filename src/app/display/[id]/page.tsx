@@ -55,12 +55,26 @@ export default function DisplayPage({ params }: { params: Promise<{ id: string }
   // is now playing (see below), so the control panel's progress bar can stay
   // in sync (#14/#15).
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const postsRef = useRef<SubmissionRow[]>([]);
+  const idxRef = useRef(0);
+  useEffect(() => { postsRef.current = posts; }, [posts]);
+  useEffect(() => { idxRef.current = idx; }, [idx]);
   useEffect(() => {
     const channel = supabase
       .channel(`event-${id}`)
       .on("broadcast", { event: "submissions_changed" }, () => loadPosts())
       .on("broadcast", { event: "event_status_changed" }, ({ payload }) => {
         setEvent((prev) => (prev ? { ...prev, status: payload.status, paused: payload.paused } : prev));
+      })
+      .on("broadcast", { event: "jump_to_post" }, ({ payload }) => {
+        const targetIdx = postsRef.current.findIndex((p) => p.id === payload.postId);
+        if (targetIdx === -1 || targetIdx === idxRef.current) return;
+        if (advanceTimer.current) clearTimeout(advanceTimer.current);
+        setFade(false);
+        setTimeout(() => {
+          setIdx(targetIdx);
+          setFade(true);
+        }, 500);
       })
       .subscribe();
     channelRef.current = channel;
