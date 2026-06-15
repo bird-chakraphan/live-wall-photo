@@ -54,22 +54,22 @@ async function main() {
     event = data;
   }
 
-  // Reset to a known, unpaused state in case a previous run left it paused.
-  await supabase.from("events").update({ paused: false }).eq("id", event.id);
+  // Reset to a known, unpaused state in case a previous run left it paused,
+  // and use the minimum post duration (10s — events_post_duration_seconds_check
+  // only allows 10/15/20/25/30) so the progress-sync e2e test runs reasonably fast.
+  await supabase.from("events").update({ paused: false, post_duration_seconds: 10 }).eq("id", event.id);
 
-  const { data: existingSubmission } = await supabase
-    .from("submissions")
-    .select("id")
-    .eq("event_id", event.id)
-    .eq("status", "approved")
-    .limit(1)
-    .maybeSingle();
+  // Tests skip/replace submissions, leaving stale rows with `created_at`
+  // ordering from earlier runs — wipe and recreate the two test posts each
+  // time so the queue order ("Realtime Tester" then "Realtime Tester 2") is
+  // deterministic.
+  await supabase.from("submissions").delete().eq("event_id", event.id);
 
-  if (!existingSubmission) {
-    const approvedAt = new Date(Date.now() - 120 * 1000).toISOString();
+  const approvedAt = new Date(Date.now() - 120 * 1000).toISOString();
+  for (const guestName of ["Realtime Tester", "Realtime Tester 2"]) {
     const { error } = await supabase.from("submissions").insert({
       event_id: event.id,
-      guest_name: "Realtime Tester",
+      guest_name: guestName,
       message: "Testing realtime sync",
       photo_url: "https://placehold.co/600x800.png",
       status: "approved",

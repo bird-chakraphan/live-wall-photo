@@ -14,6 +14,10 @@ export default function ControlPanelPage({ params }: { params: Promise<{ id: str
   const [queue, setQueue] = useState<SubmissionRow[]>([]);
   const [pct, setPct] = useState(0);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  // Set by the display's "now_playing" broadcast — lets the progress bar
+  // derive elapsed time from the display's actual timer instead of running
+  // an independent guess (#14/#15).
+  const [nowPlayingSync, setNowPlayingSync] = useState<{ postId: string; durationMs: number; startedAt: number } | null>(null);
 
   // Load + subscribe
   useEffect(() => {
@@ -23,13 +27,16 @@ export default function ControlPanelPage({ params }: { params: Promise<{ id: str
       await reload();
     })();
     const ch = supabase
-      .channel(`ctrl-${id}`)
+      .channel(`event-${id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "submissions", filter: `event_id=eq.${id}` }, () => reload())
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "events", filter: `id=eq.${id}` },
         async () => {
           const { data: ev } = await supabase.from("events").select("*").eq("id", id).single();
           setEvent(ev as EventRow);
         })
+      .on("broadcast", { event: "now_playing" }, ({ payload }) => {
+        setNowPlayingSync({ postId: payload.postId, durationMs: payload.durationMs, startedAt: Date.now() });
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
@@ -46,17 +53,27 @@ export default function ControlPanelPage({ params }: { params: Promise<{ id: str
     setQueue((data || []) as SubmissionRow[]);
   };
 
-  // Progress bar animation
+  const nowPlaying = queue[0];
+
+  // Progress bar animation — derives elapsed-based progress from the
+  // display's now_playing broadcast when it's for the current post, falling
+  // back to an independent timer (e.g. before the first broadcast arrives).
   useEffect(() => {
     if (event?.paused) return;
     const dur = (event?.post_duration_seconds || 15) * 1000;
     const interval = 75;
     const inc = (100 / dur) * interval;
-    const t = setInterval(() => setPct((p) => (p >= 100 ? 0 : p + inc)), interval);
+    const t = setInterval(() => {
+      if (nowPlayingSync && nowPlayingSync.postId === nowPlaying?.id) {
+        const elapsed = Date.now() - nowPlayingSync.startedAt;
+        setPct(Math.min(100, (elapsed / nowPlayingSync.durationMs) * 100));
+      } else {
+        setPct((p) => (p >= 100 ? 0 : p + inc));
+      }
+    }, interval);
     return () => clearInterval(t);
-  }, [event?.paused, event?.post_duration_seconds]);
+  }, [event?.paused, event?.post_duration_seconds, nowPlayingSync, nowPlaying?.id]);
 
-  const nowPlaying = queue[0];
   const upNext = queue.slice(1);
   const ac = event?.accent_color || "#FF7A59";
 
@@ -106,7 +123,7 @@ export default function ControlPanelPage({ params }: { params: Promise<{ id: str
               </div>
             </div>
             <div style={{ height: 3, borderRadius: 999, background: "rgba(255,255,255,.10)", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${pct}%`, background: event.paused ? "rgba(255,255,255,.2)" : ac, transition: "width .075s linear" }} />
+              <div data-testid="progress-bar" style={{ height: "100%", width: `${pct}%`, background: event.paused ? "rgba(255,255,255,.2)" : ac, transition: "width .075s linear" }} />
             </div>
             <button onClick={skipNow} style={{ width: "100%", marginTop: 12, height: 48, border: "1px solid " + D.border, borderRadius: 12, background: "rgba(255,255,255,.06)", color: D.text, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>Skip ⏭</button>
           </>

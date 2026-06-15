@@ -51,7 +51,10 @@ export default function DisplayPage({ params }: { params: Promise<{ id: string }
   // Realtime: re-load when anything changes, via broadcast pings sent by
   // DB triggers (see migration 009) — avoids RLS-on-new-row gating that
   // dropped the broadcast for status='skipped' submissions, and avoids
-  // exposing the full events row to anon.
+  // exposing the full events row to anon. Also used to broadcast which post
+  // is now playing (see below), so the control panel's progress bar can stay
+  // in sync (#14/#15).
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   useEffect(() => {
     const channel = supabase
       .channel(`event-${id}`)
@@ -60,7 +63,8 @@ export default function DisplayPage({ params }: { params: Promise<{ id: string }
         setEvent((prev) => (prev ? { ...prev, status: payload.status, paused: payload.paused } : prev));
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    channelRef.current = channel;
+    return () => { supabase.removeChannel(channel); channelRef.current = null; };
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [id]);
 
@@ -68,6 +72,7 @@ export default function DisplayPage({ params }: { params: Promise<{ id: string }
   const isTestMode = event?.status === "active_ready";
   const currentPost = posts[idx];
   const duration = (event?.post_duration_seconds || 15) * 1000;
+  const showLiveWall = live && currentPost && !event?.paused;
 
   // Auto-advance with fade
   useEffect(() => {
@@ -82,10 +87,22 @@ export default function DisplayPage({ params }: { params: Promise<{ id: string }
     return () => { if (advanceTimer.current) clearTimeout(advanceTimer.current); };
   }, [idx, posts, live, event?.paused, duration]);
 
+  // Let the control panel know which post just started (and for how long),
+  // so its progress bar can reset/sync to the real timer instead of running
+  // an independent guess. Fires on advance, and again on resume (the
+  // auto-advance effect above restarts the full duration on resume too).
+  useEffect(() => {
+    if (!showLiveWall) return;
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "now_playing",
+      payload: { postId: currentPost.id, durationMs: duration },
+    });
+  }, [currentPost?.id, showLiveWall, duration]);
+
   // Reset if posts shrank below current idx
   useEffect(() => { if (idx >= posts.length) setIdx(0); }, [posts.length, idx]);
 
-  const showLiveWall = live && currentPost && !event?.paused;
   const ac = event?.accent_color || "#FF7A59";
   const f = event?.display_font || "Prompt";
 

@@ -31,17 +31,17 @@ test("pausing from the control panel updates the display screen without a reload
   await expect(pauseButton).toHaveText("Pause ⏸");
 
   await display.goto(`/display/${TEST_EVENT_ID}`);
-  await expect(display.getByText("Realtime Tester")).toBeVisible({ timeout: 15_000 });
+  await expect(display.getByText("Realtime Tester", { exact: true })).toBeVisible({ timeout: 15_000 });
 
   await pauseButton.click();
   await expect(pauseButton).toHaveText("▶ Resume");
 
   // No reload on the display page — realtime should push the paused state.
-  await expect(display.getByText("Realtime Tester")).toBeHidden({ timeout: 10_000 });
+  await expect(display.getByText("Realtime Tester", { exact: true })).toBeHidden({ timeout: 10_000 });
 
   await pauseButton.click();
   await expect(pauseButton).toHaveText("Pause ⏸");
-  await expect(display.getByText("Realtime Tester")).toBeVisible({ timeout: 10_000 });
+  await expect(display.getByText("Realtime Tester", { exact: true })).toBeVisible({ timeout: 10_000 });
 
   await controlContext.close();
   await displayContext.close();
@@ -61,17 +61,19 @@ test("skipping the now-playing post from the control panel removes it from the d
   await control.waitForURL("/dashboard");
 
   await control.goto(`/dashboard/events/${TEST_EVENT_ID}/control`);
-  const skipButton = control.getByRole("button", { name: "Skip ⏭" });
+  // The "Now Playing" skip button — the seed also creates an "Up Next" item
+  // with its own Skip button, so scope to the first match.
+  const skipButton = control.getByRole("button", { name: "Skip ⏭" }).first();
   await expect(skipButton).toBeVisible();
 
   await display.goto(`/display/${TEST_EVENT_ID}`);
-  await expect(display.getByText("Realtime Tester")).toBeVisible({ timeout: 15_000 });
+  await expect(display.getByText("Realtime Tester", { exact: true })).toBeVisible({ timeout: 15_000 });
 
   await skipButton.click();
 
   // No reload on the display page — the skipped post should disappear via
   // the submissions_changed broadcast (see migration 009 / issue #12).
-  await expect(display.getByText("Realtime Tester")).toBeHidden({ timeout: 10_000 });
+  await expect(display.getByText("Realtime Tester", { exact: true })).toBeHidden({ timeout: 10_000 });
 
   await controlContext.close();
   await displayContext.close();
