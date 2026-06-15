@@ -96,8 +96,15 @@ export default function GuestUploadPage({ params }: { params: Promise<{ id: stri
     fd.append("photo", photo!);
     const res = await fetch("/api/submissions", { method: "POST", body: fd });
     setLoading(false);
-    if (res.ok) setSent(true);
-    else setErrors({ msg: "ส่งไม่สำเร็จ ลองอีกครั้งนะคะ" });
+    if (res.ok) {
+      setSent(true);
+      return;
+    }
+    if (res.status === 415) {
+      setErrors({ photo: "ไฟล์รูปภาพนี้ไม่รองรับ ลองเปลี่ยนเป็น JPEG หรือ PNG นะคะ" });
+      return;
+    }
+    setErrors({ msg: "ส่งไม่สำเร็จ ลองอีกครั้งนะคะ" });
   };
 
   const reset = () => { setName(""); setPhoto(null); setPhotoPreview(null); setMsg(""); setErrors({}); setSent(false); };

@@ -22,7 +22,7 @@ create table events (
   live_started_at timestamptz,
   live_expires_at timestamptz,
   paused boolean not null default false,
-  retention_until date,                  -- 90 days after event_date, auto-purge target
+  retention_until date,                  -- 60 days after event_date, auto-purge target (see 010_retention.sql)
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

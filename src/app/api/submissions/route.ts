@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { processSubmissionPhoto } from "@/lib/image-processing";
 import { createServiceClient } from "@/lib/supabase/server";
 import { moderateImage, moderateText } from "@/lib/moderation";
 
@@ -26,12 +27,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "event_not_open" }, { status: 404 });
   }
 
+  // Re-encode: auto-orient from EXIF, strip all metadata (GPS/device info),
+  // downscale oversized photos, and normalize to JPEG. Rejects formats sharp
+  // can't decode (e.g. HEIC on builds without HEIC support) with a clear
+  // guest-facing error rather than storing an unprocessable file.
+  const srcBuf = Buffer.from(await photo.arrayBuffer());
+  let buf: Buffer;
+  try {
+    buf = await processSubmissionPhoto(srcBuf);
+  } catch {
+    return NextResponse.json({ error: "unsupported_image" }, { status: 415 });
+  }
+
   // Upload to Storage
-  const ext = (photo.name.split(".").pop() || "jpg").toLowerCase();
-  const path = `${eventId}/${crypto.randomUUID()}.${ext}`;
-  const buf = Buffer.from(await photo.arrayBuffer());
+  const path = `${eventId}/${crypto.randomUUID()}.jpg`;
   const { error: upErr } = await svc.storage.from("guest-photos").upload(path, buf, {
-    contentType: photo.type || "image/jpeg",
+    contentType: "image/jpeg",
     upsert: false,
   });
   if (upErr) return NextResponse.json({ error: "upload_failed", detail: upErr.message }, { status: 500 });

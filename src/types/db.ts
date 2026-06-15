@@ -22,6 +22,8 @@ export interface EventRow {
   live_started_at: string | null;
   live_expires_at: string | null;
   paused: boolean;
+  retention_until: string | null;   // event_date + 60 days; auto-purge target
+  content_purged_at: string | null; // set once submissions/storage are purged
   created_at: string;
   updated_at: string;
   status_changed_at: string;
