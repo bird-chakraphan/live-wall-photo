@@ -215,7 +215,7 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
       )}
       {/* Row 1: Back to Dashboard / Saved indicator — normal flow, scrolls away */}
       {isActiveBanner ? (
-        <div style={{ background: headerGrad, backgroundSize: `100% ${headerTotalH}px`, backgroundPosition: "0 0", padding: isMobile ? "10px 0 0" : "12px 0 0", marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw" }}>
+        <div style={{ backgroundImage: headerGrad, backgroundSize: `100% ${headerTotalH}px`, backgroundPosition: "0 0", backgroundRepeat: "no-repeat", padding: isMobile ? "10px 0 0" : "12px 0 0", marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw" }}>
           <div style={{ maxWidth: 800, margin: "0 auto", padding: pad, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <Link href="/dashboard" style={{ fontSize: 13, color: "#fff", opacity: 0.85, display: "block" }}>← Back to Dashboard</Link>
             <div style={{ fontSize: 12, color: "#fff", fontWeight: 600, opacity: saveBlink ? 0.9 : 0, transition: "opacity .2s" }}>Saved ✓</div>
@@ -232,7 +232,7 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
 
       {/* Row 2: title + badge + action — sticky at top of viewport */}
       {isActiveBanner ? (
-        <div style={{ background: headerGrad, backgroundSize: `100% ${headerTotalH}px`, backgroundPosition: `0 -${headerRow1H}px`, padding: isMobile ? "10px 0 8px" : "12px 0 12px", marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw", position: "sticky", top: 0, zIndex: 40 }}>
+        <div style={{ backgroundImage: headerGrad, backgroundSize: `100% ${headerTotalH}px`, backgroundPosition: `0 -${headerRow1H}px`, backgroundRepeat: "no-repeat", padding: isMobile ? "10px 0 8px" : "12px 0 12px", marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw", position: "sticky", top: 0, zIndex: 40 }}>
           <div style={{ maxWidth: 800, margin: "0 auto", padding: pad }}>
             <div style={{ display: "flex", alignItems: "center", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 10 : 14 }}>
               {editingTitle ? (
@@ -531,7 +531,7 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
             </div>
 
             {isDraft && (
-              <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: "center", justifyContent: "flex-end", gap: isMobile ? 12 : 20 }}>
+              <div style={{ display: "flex", flexDirection: isMobile ? "column-reverse" : "row", alignItems: "center", justifyContent: "flex-end", gap: isMobile ? 12 : 20 }}>
                 <div style={{ fontSize: 13, color: "var(--ink-mute)", textAlign: isMobile ? "center" : "right" }}>
                   หลังจากเปิดใช้งานอีเวนท์แล้ว สามารถเริ่มไลฟ์เมื่อไหร่ก็ได้
                   <br />
@@ -549,7 +549,7 @@ export default function EventSettingsPage({ params }: { params: Promise<{ id: st
                 display: "flex", alignItems: "center", justifyContent: "flex-end",
                 gap: isMobile ? 10 : 20, flexDirection: isMobile ? "column-reverse" : "row",
               }}>
-                <p style={{ fontSize: 13, color: "var(--ink-mute)", textAlign: "center", lineHeight: 1.6, margin: 0 }}>
+                <p style={{ fontSize: 13, color: "var(--ink-mute)", textAlign: isMobile ? "center" : "right", lineHeight: 1.6, margin: 0 }}>
                   หลังจากเริ่มไลฟ์จะไม่สามารถแก้ไขข้อมูลอีเวนท์ได้<br /><b>ระวัง! กดเริ่ม live อย่างรอบคอบ!</b>
                 </p>
                 <button onClick={() => { setShowStartModal(true); setConfirmText(""); }} style={{

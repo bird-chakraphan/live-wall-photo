@@ -1,9 +1,14 @@
 // Moderation: OpenAI for text + Sightengine for images.
 // Both calls are best-effort — if the keys aren't configured, we accept by default
-// in dev. In production, missing keys should fail closed.
+// in dev. In production, missing keys fail closed.
+
+const isProduction =
+  process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production";
+
+const unconfigured = { ok: false as const, reason: "moderation_unconfigured" };
 
 export async function moderateText(text: string): Promise<{ ok: boolean; reason?: string }> {
-  if (!process.env.OPENAI_API_KEY) return { ok: true };
+  if (!process.env.OPENAI_API_KEY) return isProduction ? unconfigured : { ok: true };
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const OpenAI = require("openai").default;
@@ -25,7 +30,9 @@ export async function moderateText(text: string): Promise<{ ok: boolean; reason?
 }
 
 export async function moderateImage(imageUrl: string): Promise<{ ok: boolean; reason?: string }> {
-  if (!process.env.SIGHTENGINE_USER || !process.env.SIGHTENGINE_SECRET) return { ok: true };
+  if (!process.env.SIGHTENGINE_USER || !process.env.SIGHTENGINE_SECRET) {
+    return isProduction ? unconfigured : { ok: true };
+  }
   try {
     const params = new URLSearchParams({
       url: imageUrl,
