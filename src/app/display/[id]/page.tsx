@@ -48,18 +48,17 @@ export default function DisplayPage({ params }: { params: Promise<{ id: string }
     setPosts((data || []) as SubmissionRow[]);
   };
 
-  // Realtime: re-load when anything changes
+  // Realtime: re-load when anything changes, via broadcast pings sent by
+  // DB triggers (see migration 009) — avoids RLS-on-new-row gating that
+  // dropped the broadcast for status='skipped' submissions, and avoids
+  // exposing the full events row to anon.
   useEffect(() => {
     const channel = supabase
       .channel(`event-${id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "submissions", filter: `event_id=eq.${id}` },
-        () => loadPosts())
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "events", filter: `id=eq.${id}` },
-        async () => {
-          const { data: ev } = await supabase.rpc("event_public", { p_id: id });
-          const row = Array.isArray(ev) ? ev[0] : ev;
-          if (row) setEvent(row as PublicEvent);
-        })
+      .on("broadcast", { event: "submissions_changed" }, () => loadPosts())
+      .on("broadcast", { event: "event_status_changed" }, ({ payload }) => {
+        setEvent((prev) => (prev ? { ...prev, status: payload.status, paused: payload.paused } : prev));
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
